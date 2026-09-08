@@ -1,0 +1,2815 @@
+--//==================================================
+
+--// TUFF SKIN CHANGER
+
+--// GUI + Unlock All + Rejoin + Auto Load + Mobile Button
+
+--//==================================================
+
+local Players = game:GetService("Players")
+
+local UserInputService = game:GetService("UserInputService")
+
+local Lighting = game:GetService("Lighting")
+
+local TweenService = game:GetService("TweenService")
+
+local TeleportService = game:GetService("TeleportService")
+
+local LocalPlayer = Players.LocalPlayer
+
+--//==================================================
+
+--// GUI PARENT
+
+--//==================================================
+
+local GuiParent = gethui and gethui() or game:GetService("CoreGui")
+
+local OldGui = GuiParent:FindFirstChild("SkinChangerGUI")
+
+if OldGui then
+
+OldGui:Destroy()
+
+end
+
+local OldMobileButtonGui = GuiParent:FindFirstChild("TuffMobileButtonGUI")
+
+if OldMobileButtonGui then
+
+OldMobileButtonGui:Destroy()
+
+end
+
+local OldBlur = Lighting:FindFirstChild("SkinChangerBlur")
+
+if OldBlur then
+
+OldBlur:Destroy()
+
+end
+
+--//==================================================
+
+--// SAVE FILES
+
+--//==================================================
+
+local SaveFolder = "TuffSkinChanger"
+
+local KeybindFile = SaveFolder .. "/SkinChangerKeybind.txt"
+
+local AutoLoadFile = SaveFolder .. "/AutoLoad.txt"
+
+if makefolder and isfolder then
+
+pcall(function()
+
+    if not isfolder(SaveFolder) then
+
+        makefolder(SaveFolder)
+
+    end
+
+end)
+
+end
+
+--//==================================================
+
+--// KEYBIND
+
+--//==================================================
+
+local OpenCloseKey = Enum.KeyCode.Insert
+
+local WaitingForKey = false
+
+local function LoadSavedKey()
+
+if not isfile or not readfile then
+
+    return
+
+end
+
+
+
+local Exists = false
+
+
+
+pcall(function()
+
+    Exists = isfile(KeybindFile)
+
+end)
+
+
+
+if not Exists then
+
+    return
+
+end
+
+
+
+local Success, SavedKey = pcall(function()
+
+    return readfile(KeybindFile)
+
+end)
+
+
+
+if not Success or not SavedKey or SavedKey == "" then
+
+    return
+
+end
+
+
+
+SavedKey = SavedKey:gsub("%s+", "")
+
+
+
+local Success2, KeyCodeValue = pcall(function()
+
+    return Enum.KeyCode[SavedKey]
+
+end)
+
+
+
+if Success2 and KeyCodeValue then
+
+    OpenCloseKey = KeyCodeValue
+
+end
+
+end
+
+local function SaveKeybind()
+
+if not writefile then
+
+    return
+
+end
+
+
+
+if makefolder and isfolder then
+
+    pcall(function()
+
+        if not isfolder(SaveFolder) then
+
+            makefolder(SaveFolder)
+
+        end
+
+    end)
+
+end
+
+
+
+pcall(function()
+
+    writefile(KeybindFile, OpenCloseKey.Name)
+
+end)
+
+end
+
+LoadSavedKey()
+
+--//==================================================
+
+--// AUTO LOAD
+
+--//==================================================
+
+local AutoLoadEnabled = false
+
+local TuffSkinChangerURL =
+
+"https://raw.githubusercontent.com/Dailychomik127/TuffSkinChanger/refs/heads/main/TuffSkinChanger.lua"
+
+local function LoadAutoLoadState()
+
+if not isfile or not readfile then
+
+    return
+
+end
+
+
+
+local Exists = false
+
+
+
+pcall(function()
+
+    Exists = isfile(AutoLoadFile)
+
+end)
+
+
+
+if not Exists then
+
+    AutoLoadEnabled = false
+
+    return
+
+end
+
+
+
+local Success, State = pcall(function()
+
+    return readfile(AutoLoadFile)
+
+end)
+
+
+
+if not Success or not State then
+
+    AutoLoadEnabled = false
+
+    return
+
+end
+
+
+
+State = State:gsub("%s+", ""):lower()
+
+AutoLoadEnabled = State == "on"
+
+end
+
+local function SaveAutoLoadState()
+
+if not writefile then
+
+    return
+
+end
+
+
+
+if makefolder and isfolder then
+
+    pcall(function()
+
+        if not isfolder(SaveFolder) then
+
+            makefolder(SaveFolder)
+
+        end
+
+    end)
+
+end
+
+
+
+pcall(function()
+
+    writefile(
+
+        AutoLoadFile,
+
+        AutoLoadEnabled and "on" or "off"
+
+    )
+
+end)
+
+end
+
+LoadAutoLoadState()
+
+--//==================================================
+
+--// QUEUE TUFF SKIN CHANGER AFTER TELEPORT
+
+--//==================================================
+
+local function QueueAutoLoad()
+
+if not AutoLoadEnabled then
+
+    return
+
+end
+
+
+
+if not queue_on_teleport then
+
+    return
+
+end
+
+
+
+pcall(function()
+
+    queue_on_teleport([[
+
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/Dailychomik127/TuffSkinChanger/refs/heads/main/TuffSkinChanger.lua"))()
+
+    ]])
+
+end)
+
+end
+
+QueueAutoLoad()
+
+--//==================================================
+
+--// BLUR
+
+--//==================================================
+
+local Blur = Instance.new("BlurEffect")
+
+Blur.Name = "SkinChangerBlur"
+
+Blur.Size = 8
+
+Blur.Parent = Lighting
+
+local BlurTweenInfo = TweenInfo.new(
+
+1,
+
+Enum.EasingStyle.Quad,
+
+Enum.EasingDirection.Out
+
+)
+
+local BlurTween
+
+--//==================================================
+
+--// SCREEN GUI
+
+--//==================================================
+
+local ScreenGui = Instance.new("ScreenGui")
+
+ScreenGui.Name = "SkinChangerGUI"
+
+ScreenGui.ResetOnSpawn = false
+
+ScreenGui.IgnoreGuiInset = true
+
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+if syn and syn.protect_gui then
+
+syn.protect_gui(ScreenGui)
+
+end
+
+ScreenGui.Parent = GuiParent
+
+--//==================================================
+
+--// MAIN
+
+--//==================================================
+
+local Main = Instance.new("Frame")
+
+Main.Name = "Main"
+
+Main.Size = UDim2.new(0, 500, 0, 500)
+
+Main.Position = UDim2.new(0.5, -250, 0.5, -250)
+
+Main.BackgroundColor3 = Color3.fromRGB(18, 34, 58)
+
+Main.BackgroundTransparency = 0.5
+
+Main.BorderSizePixel = 0
+
+Main.Active = true
+
+Main.ClipsDescendants = false
+
+Main.Parent = ScreenGui
+
+local MainCorner = Instance.new("UICorner")
+
+MainCorner.CornerRadius = UDim.new(0, 22)
+
+MainCorner.Parent = Main
+
+local MainStroke = Instance.new("UIStroke")
+
+MainStroke.Color = Color3.fromRGB(65, 105, 155)
+
+MainStroke.Transparency = 0.55
+
+MainStroke.Thickness = 1
+
+MainStroke.Parent = Main
+
+--//==================================================
+
+--// DRAG BAR
+
+--//==================================================
+
+local DragBar = Instance.new("Frame")
+
+DragBar.Name = "DragBar"
+
+DragBar.Size = UDim2.new(1, -20, 0, 60)
+
+DragBar.Position = UDim2.new(0, 10, 0, 10)
+
+DragBar.BackgroundColor3 = Color3.fromRGB(8, 18, 34)
+
+DragBar.BackgroundTransparency = 0.35
+
+DragBar.BorderSizePixel = 0
+
+DragBar.Active = true
+
+DragBar.ZIndex = 5
+
+DragBar.Parent = Main
+
+local DragCorner = Instance.new("UICorner")
+
+DragCorner.CornerRadius = UDim.new(0, 18)
+
+DragCorner.Parent = DragBar
+
+local DragStroke = Instance.new("UIStroke")
+
+DragStroke.Color = Color3.fromRGB(45, 80, 120)
+
+DragStroke.Transparency = 0.6
+
+DragStroke.Thickness = 1
+
+DragStroke.Parent = DragBar
+
+--//==================================================
+
+--// TITLE
+
+--//==================================================
+
+local Title = Instance.new("TextLabel")
+
+Title.Name = "Title"
+
+Title.Size = UDim2.new(1, -80, 1, 0)
+
+Title.Position = UDim2.new(0, 15, 0, 0)
+
+Title.BackgroundTransparency = 1
+
+Title.Text = "Tuff Skin Changer"
+
+Title.TextColor3 = Color3.fromRGB(225, 235, 250)
+
+Title.TextSize = 21
+
+Title.Font = Enum.Font.GothamSemibold
+
+Title.TextXAlignment = Enum.TextXAlignment.Left
+
+Title.ZIndex = 6
+
+Title.Parent = DragBar
+
+--//==================================================
+
+--// SETTINGS BUTTON
+
+--//==================================================
+
+local SettingsButton = Instance.new("TextButton")
+
+SettingsButton.Name = "SettingsButton"
+
+SettingsButton.Size = UDim2.new(0, 42, 0, 42)
+
+SettingsButton.Position = UDim2.new(1, -52, 0.5, -21)
+
+SettingsButton.BackgroundColor3 = Color3.fromRGB(18, 34, 55)
+
+SettingsButton.BackgroundTransparency = 0.15
+
+SettingsButton.BorderSizePixel = 0
+
+SettingsButton.Text = "⚙"
+
+SettingsButton.TextColor3 = Color3.fromRGB(190, 205, 225)
+
+SettingsButton.TextSize = 23
+
+SettingsButton.Font = Enum.Font.Gotham
+
+SettingsButton.AutoButtonColor = false
+
+SettingsButton.ZIndex = 7
+
+SettingsButton.Parent = DragBar
+
+local SettingsCorner = Instance.new("UICorner")
+
+SettingsCorner.CornerRadius = UDim.new(0, 12)
+
+SettingsCorner.Parent = SettingsButton
+
+SettingsButton.MouseEnter:Connect(function()
+
+SettingsButton.BackgroundColor3 = Color3.fromRGB(30, 55, 85)
+
+SettingsButton.TextColor3 = Color3.fromRGB(235, 245, 255)
+
+end)
+
+SettingsButton.MouseLeave:Connect(function()
+
+SettingsButton.BackgroundColor3 = Color3.fromRGB(18, 34, 55)
+
+SettingsButton.TextColor3 = Color3.fromRGB(190, 205, 225)
+
+end)
+
+--//==================================================
+
+--// TAB BAR
+
+--//==================================================
+
+local TabBar = Instance.new("Frame")
+
+TabBar.Name = "TabBar"
+
+TabBar.Size = UDim2.new(1, -30, 0, 42)
+
+TabBar.Position = UDim2.new(0, 15, 0, 78)
+
+TabBar.BackgroundTransparency = 1
+
+TabBar.BorderSizePixel = 0
+
+TabBar.Parent = Main
+
+--//==================================================
+
+--// SKIN TAB
+
+--//==================================================
+
+local SkinChangerTab = Instance.new("TextButton")
+
+SkinChangerTab.Name = "SkinChangerTab"
+
+SkinChangerTab.Size = UDim2.new(0, 145, 0, 42)
+
+SkinChangerTab.Position = UDim2.new(0, 0, 0, 0)
+
+SkinChangerTab.BackgroundColor3 = Color3.fromRGB(18, 42, 70)
+
+SkinChangerTab.BackgroundTransparency = 0.1
+
+SkinChangerTab.BorderSizePixel = 0
+
+SkinChangerTab.Text = "Skin Changer"
+
+SkinChangerTab.TextColor3 = Color3.fromRGB(230, 240, 255)
+
+SkinChangerTab.TextSize = 14
+
+SkinChangerTab.Font = Enum.Font.GothamMedium
+
+SkinChangerTab.AutoButtonColor = false
+
+SkinChangerTab.ZIndex = 10
+
+SkinChangerTab.Parent = TabBar
+
+local SkinChangerTabCorner = Instance.new("UICorner")
+
+SkinChangerTabCorner.CornerRadius = UDim.new(0, 12)
+
+SkinChangerTabCorner.Parent = SkinChangerTab
+
+local SkinChangerTabStroke = Instance.new("UIStroke")
+
+SkinChangerTabStroke.Color = Color3.fromRGB(55, 100, 155)
+
+SkinChangerTabStroke.Transparency = 0.4
+
+SkinChangerTabStroke.Thickness = 1
+
+SkinChangerTabStroke.Parent = SkinChangerTab
+
+--//==================================================
+
+--// AIMBOT TAB
+local AimbotTab = Instance.new("TextButton")
+AimbotTab.Name = "AimbotTab"
+AimbotTab.Size = UDim2.new(0, 145, 0, 42)
+AimbotTab.Position = UDim2.new(0, 150, 0, 0)
+AimbotTab.BackgroundColor3 = Color3.fromRGB(10, 25, 45)
+AimbotTab.BackgroundTransparency = 0.15
+AimbotTab.BorderSizePixel = 0
+AimbotTab.Text = "Aimbot"
+AimbotTab.TextColor3 = Color3.fromRGB(190, 205, 225)
+AimbotTab.TextSize = 14
+AimbotTab.Font = Enum.Font.GothamMedium
+AimbotTab.AutoButtonColor = false
+AimbotTab.ZIndex = 11
+AimbotTab.Parent = TabBar
+
+local AimbotTabCorner = Instance.new("UICorner")
+AimbotTabCorner.CornerRadius = UDim.new(0, 12)
+AimbotTabCorner.Parent = AimbotTab
+
+local AimbotTabStroke = Instance.new("UIStroke")
+AimbotTabStroke.Color = Color3.fromRGB(55, 100, 155)
+AimbotTabStroke.Transparency = 0.55
+AimbotTabStroke.Thickness = 1
+AimbotTabStroke.Parent = AimbotTab
+
+--// SETTINGS TAB
+
+--//==================================================
+
+local SettingsTab = Instance.new("TextButton")
+
+SettingsTab.Name = "SettingsTab"
+
+SettingsTab.Size = UDim2.new(0, 145, 0, 42)
+
+SettingsTab.Position = UDim2.new(0, 300, 0, 0)
+
+SettingsTab.BackgroundColor3 = Color3.fromRGB(10, 25, 45)
+
+SettingsTab.BackgroundTransparency = 0.15
+
+SettingsTab.BorderSizePixel = 0
+
+SettingsTab.Text = "Settings"
+
+SettingsTab.TextColor3 = Color3.fromRGB(190, 205, 225)
+
+SettingsTab.TextSize = 14
+
+SettingsTab.Font = Enum.Font.GothamMedium
+
+SettingsTab.AutoButtonColor = false
+
+SettingsTab.ZIndex = 10
+
+SettingsTab.Parent = TabBar
+
+local SettingsTabCorner = Instance.new("UICorner")
+
+SettingsTabCorner.CornerRadius = UDim.new(0, 12)
+
+SettingsTabCorner.Parent = SettingsTab
+
+local SettingsTabStroke = Instance.new("UIStroke")
+
+SettingsTabStroke.Color = Color3.fromRGB(55, 100, 155)
+
+SettingsTabStroke.Transparency = 0.55
+
+SettingsTabStroke.Thickness = 1
+
+SettingsTabStroke.Parent = SettingsTab
+
+--//==================================================
+
+--// CONTENT
+
+--//==================================================
+
+local Content = Instance.new("Frame")
+
+Content.Name = "Content"
+
+Content.Size = UDim2.new(1, -30, 1, -135)
+
+Content.Position = UDim2.new(0, 15, 0, 130)
+
+Content.BackgroundTransparency = 1
+
+Content.BorderSizePixel = 0
+
+Content.ClipsDescendants = true
+
+Content.Parent = Main
+
+--//==================================================
+
+--// SKIN PAGE
+
+--//==================================================
+
+local SkinPage = Instance.new("Frame")
+
+SkinPage.Name = "SkinPage"
+
+SkinPage.Size = UDim2.new(1, 0, 1, 0)
+
+SkinPage.BackgroundTransparency = 1
+
+SkinPage.BorderSizePixel = 0
+
+SkinPage.Visible = true
+
+SkinPage.Parent = Content
+
+--//==================================================
+
+--// UNLOCK ALL
+
+--//==================================================
+
+local UnlockAllButton = Instance.new("TextButton")
+
+UnlockAllButton.Name = "UnlockAllButton"
+
+UnlockAllButton.Size = UDim2.new(1, 0, 0, 52)
+
+UnlockAllButton.Position = UDim2.new(0, 0, 0, 5)
+
+UnlockAllButton.BackgroundColor3 = Color3.fromRGB(18, 42, 70)
+
+UnlockAllButton.BackgroundTransparency = 0.15
+
+UnlockAllButton.BorderSizePixel = 0
+
+UnlockAllButton.Text = "Unlock All Skins"
+
+UnlockAllButton.TextColor3 = Color3.fromRGB(225, 235, 250)
+
+UnlockAllButton.TextSize = 14
+
+UnlockAllButton.Font = Enum.Font.GothamMedium
+
+UnlockAllButton.AutoButtonColor = false
+
+UnlockAllButton.Parent = SkinPage
+
+local UnlockAllCorner = Instance.new("UICorner")
+
+UnlockAllCorner.CornerRadius = UDim.new(0, 12)
+
+UnlockAllCorner.Parent = UnlockAllButton
+
+local UnlockAllStroke = Instance.new("UIStroke")
+
+UnlockAllStroke.Color = Color3.fromRGB(55, 100, 155)
+
+UnlockAllStroke.Transparency = 0.55
+
+UnlockAllStroke.Thickness = 1
+
+UnlockAllStroke.Parent = UnlockAllButton
+
+local ScriptURL = "https://pastefy.app/6ElsMLeb/raw"
+
+local UnlockAllLoaded = false
+
+UnlockAllButton.MouseEnter:Connect(function()
+
+if not UnlockAllLoaded then
+
+    UnlockAllButton.BackgroundColor3 = Color3.fromRGB(25, 52, 85)
+
+end
+
+end)
+
+UnlockAllButton.MouseLeave:Connect(function()
+
+if not UnlockAllLoaded then
+
+    UnlockAllButton.BackgroundColor3 = Color3.fromRGB(18, 42, 70)
+
+end
+
+end)
+
+--// Small status text
+
+local UnlockStatus = Instance.new("TextLabel")
+
+UnlockStatus.Name = "UnlockStatus"
+
+UnlockStatus.Size = UDim2.new(1, 0, 0, 25)
+
+UnlockStatus.Position = UDim2.new(0, 0, 0, 62)
+
+UnlockStatus.BackgroundTransparency = 1
+
+UnlockStatus.Text = ""
+
+UnlockStatus.TextColor3 = Color3.fromRGB(150, 165, 185)
+
+UnlockStatus.TextSize = 12
+
+UnlockStatus.Font = Enum.Font.Gotham
+
+UnlockStatus.TextXAlignment = Enum.TextXAlignment.Center
+
+UnlockStatus.Parent = SkinPage
+
+UnlockAllButton.MouseButton1Click:Connect(function()
+
+if UnlockAllLoaded then
+
+    return
+
+end
+
+
+
+local Success = pcall(function()
+
+    loadstring(game:HttpGet(ScriptURL))()
+
+end)
+
+
+
+if Success then
+
+    UnlockAllLoaded = true
+
+
+
+    UnlockAllButton.Text = "Unlocked All!"
+
+    UnlockAllButton.BackgroundColor3 = Color3.fromRGB(45, 140, 75)
+
+
+
+    UnlockAllStroke.Color = Color3.fromRGB(75, 180, 100)
+
+    UnlockAllButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+
+
+    UnlockStatus.Text = "All cosmetics unlocked"
+
+    UnlockStatus.TextColor3 = Color3.fromRGB(150, 200, 165)
+
+else
+
+    UnlockStatus.Text = "Failed to load unlocker"
+
+    UnlockStatus.TextColor3 = Color3.fromRGB(220, 120, 120)
+
+end
+
+end)
+
+--//==================================================
+
+--// REJOIN BUTTON
+
+--//==================================================
+
+local RejoinButton = Instance.new("TextButton")
+
+RejoinButton.Name = "RejoinButton"
+
+RejoinButton.Size = UDim2.new(1, 0, 0, 52)
+
+RejoinButton.Position = UDim2.new(0, 0, 0, 105)
+
+RejoinButton.BackgroundColor3 = Color3.fromRGB(18, 42, 70)
+
+RejoinButton.BackgroundTransparency = 0.15
+
+RejoinButton.BorderSizePixel = 0
+
+RejoinButton.Text = "Rejoin"
+
+RejoinButton.TextColor3 = Color3.fromRGB(225, 235, 250)
+
+RejoinButton.TextSize = 14
+
+RejoinButton.Font = Enum.Font.GothamMedium
+
+RejoinButton.AutoButtonColor = false
+
+RejoinButton.Parent = SkinPage
+
+local RejoinCorner = Instance.new("UICorner")
+
+RejoinCorner.CornerRadius = UDim.new(0, 12)
+
+RejoinCorner.Parent = RejoinButton
+
+local RejoinStroke = Instance.new("UIStroke")
+
+RejoinStroke.Color = Color3.fromRGB(55, 100, 155)
+
+RejoinStroke.Transparency = 0.55
+
+RejoinStroke.Thickness = 1
+
+RejoinStroke.Parent = RejoinButton
+
+RejoinButton.MouseEnter:Connect(function()
+
+RejoinButton.BackgroundColor3 = Color3.fromRGB(25, 52, 85)
+
+end)
+
+RejoinButton.MouseLeave:Connect(function()
+
+RejoinButton.BackgroundColor3 = Color3.fromRGB(18, 42, 70)
+
+end)
+
+RejoinButton.MouseButton1Click:Connect(function()
+
+RejoinButton.Text = "Rejoining..."
+
+
+
+task.wait(0.15)
+
+
+
+pcall(function()
+
+    TeleportService:TeleportToPlaceInstance(
+
+        game.PlaceId,
+
+        game.JobId,
+
+        LocalPlayer
+
+    )
+
+end)
+
+end)
+
+--//==================================================
+
+--// AIMBOT PAGE
+
+--//==================================================
+
+local AimbotPage = Instance.new("ScrollingFrame")
+AimbotPage.Name = "AimbotPage"
+AimbotPage.Size = UDim2.new(1, 0, 1, 0)
+AimbotPage.BackgroundTransparency = 1
+AimbotPage.BorderSizePixel = 0
+AimbotPage.Visible = false
+AimbotPage.ScrollBarThickness = 5
+AimbotPage.ScrollBarImageTransparency = 0.25
+AimbotPage.ScrollBarImageColor3 = Color3.fromRGB(80, 120, 170)
+AimbotPage.CanvasSize = UDim2.new(0, 0, 0, 0)
+AimbotPage.AutomaticCanvasSize = Enum.AutomaticSize.Y
+AimbotPage.ScrollingDirection = Enum.ScrollingDirection.Y
+AimbotPage.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
+AimbotPage.ScrollingEnabled = true
+AimbotPage.Active = true
+AimbotPage.Parent = Content
+
+--//==================================================
+--// ESP
+--//==================================================
+
+local EspRow = Instance.new("Frame")
+EspRow.Name = "EspRow"
+EspRow.Size = UDim2.new(1, 0, 0, 52)
+EspRow.Position = UDim2.new(0, 0, 0, 5)
+EspRow.BackgroundColor3 = Color3.fromRGB(10, 25, 45)
+EspRow.BackgroundTransparency = 0.15
+EspRow.BorderSizePixel = 0
+EspRow.Parent = AimbotPage
+
+local EspRowCorner = Instance.new("UICorner")
+EspRowCorner.CornerRadius = UDim.new(0, 12)
+EspRowCorner.Parent = EspRow
+
+local EspRowStroke = Instance.new("UIStroke")
+EspRowStroke.Color = Color3.fromRGB(55, 100, 155)
+EspRowStroke.Transparency = 0.55
+EspRowStroke.Thickness = 1
+EspRowStroke.Parent = EspRow
+
+local EspText = Instance.new("TextLabel")
+EspText.Name = "EspText"
+EspText.Size = UDim2.new(1, -100, 1, 0)
+EspText.Position = UDim2.new(0, 16, 0, 0)
+EspText.BackgroundTransparency = 1
+EspText.Text = "Esp"
+EspText.TextColor3 = Color3.fromRGB(220, 230, 245)
+EspText.TextSize = 14
+EspText.Font = Enum.Font.GothamMedium
+EspText.TextXAlignment = Enum.TextXAlignment.Left
+EspText.Parent = EspRow
+
+--//==================================================
+--// ESP SWITCH
+--//==================================================
+
+local EspSwitch = Instance.new("TextButton")
+EspSwitch.Name = "EspSwitch"
+EspSwitch.Size = UDim2.new(0, 58, 0, 30)
+EspSwitch.Position = UDim2.new(1, -70, 0.5, -15)
+EspSwitch.BorderSizePixel = 0
+EspSwitch.Text = ""
+EspSwitch.AutoButtonColor = false
+EspSwitch.Parent = EspRow
+
+local EspSwitchCorner = Instance.new("UICorner")
+EspSwitchCorner.CornerRadius = UDim.new(1, 0)
+EspSwitchCorner.Parent = EspSwitch
+
+local EspKnob = Instance.new("Frame")
+EspKnob.Name = "Knob"
+EspKnob.Size = UDim2.new(0, 24, 0, 24)
+EspKnob.Position = UDim2.new(0, 3, 0.5, -12)
+EspKnob.BorderSizePixel = 0
+EspKnob.Parent = EspSwitch
+
+local EspKnobCorner = Instance.new("UICorner")
+EspKnobCorner.CornerRadius = UDim.new(1, 0)
+EspKnobCorner.Parent = EspKnob
+
+--//==================================================
+--// ESP BODY PART SELECTOR
+--//==================================================
+
+local EspPartMode = "All"
+
+local EspPartRow = Instance.new("Frame")
+EspPartRow.Name = "EspPartRow"
+EspPartRow.Size = UDim2.new(1, 0, 0, 52)
+EspPartRow.Position = UDim2.new(0, 0, 0, 67)
+EspPartRow.BackgroundColor3 = Color3.fromRGB(10, 25, 45)
+EspPartRow.BackgroundTransparency = 0.15
+EspPartRow.BorderSizePixel = 0
+EspPartRow.ZIndex = 30
+EspPartRow.Parent = AimbotPage
+
+local EspPartRowCorner = Instance.new("UICorner")
+EspPartRowCorner.CornerRadius = UDim.new(0, 12)
+EspPartRowCorner.Parent = EspPartRow
+
+local EspPartRowStroke = Instance.new("UIStroke")
+EspPartRowStroke.Color = Color3.fromRGB(55, 100, 155)
+EspPartRowStroke.Transparency = 0.55
+EspPartRowStroke.Thickness = 1
+EspPartRowStroke.Parent = EspPartRow
+
+local EspPartText = Instance.new("TextLabel")
+EspPartText.Name = "EspPartText"
+EspPartText.Size = UDim2.new(0.5, -16, 1, 0)
+EspPartText.Position = UDim2.new(0, 16, 0, 0)
+EspPartText.BackgroundTransparency = 1
+EspPartText.Text = "ESP Body Part"
+EspPartText.TextColor3 = Color3.fromRGB(220, 230, 245)
+EspPartText.TextSize = 14
+EspPartText.Font = Enum.Font.GothamMedium
+EspPartText.TextXAlignment = Enum.TextXAlignment.Left
+EspPartText.ZIndex = 31
+EspPartText.Parent = EspPartRow
+
+local EspPartDropdown = Instance.new("TextButton")
+EspPartDropdown.Name = "EspPartDropdown"
+EspPartDropdown.Size = UDim2.new(0, 125, 0, 34)
+EspPartDropdown.Position = UDim2.new(1, -137, 0.5, -17)
+EspPartDropdown.BackgroundColor3 = Color3.fromRGB(18, 42, 70)
+EspPartDropdown.BackgroundTransparency = 0.05
+EspPartDropdown.BorderSizePixel = 0
+EspPartDropdown.Text = "All"
+EspPartDropdown.TextColor3 = Color3.fromRGB(225, 235, 250)
+EspPartDropdown.TextSize = 13
+EspPartDropdown.Font = Enum.Font.GothamMedium
+EspPartDropdown.AutoButtonColor = false
+EspPartDropdown.ZIndex = 32
+EspPartDropdown.Parent = EspPartRow
+
+local EspPartDropdownCorner = Instance.new("UICorner")
+EspPartDropdownCorner.CornerRadius = UDim.new(0, 10)
+EspPartDropdownCorner.Parent = EspPartDropdown
+
+local EspPartDropdownStroke = Instance.new("UIStroke")
+EspPartDropdownStroke.Color = Color3.fromRGB(65, 105, 155)
+EspPartDropdownStroke.Transparency = 0.2
+EspPartDropdownStroke.Thickness = 1
+EspPartDropdownStroke.Parent = EspPartDropdown
+
+local EspPartList = Instance.new("Frame")
+EspPartList.Name = "EspPartList"
+EspPartList.Size = UDim2.new(0, 125, 0, 0)
+EspPartList.Position = UDim2.new(1, -137, 1, 4)
+EspPartList.BackgroundColor3 = Color3.fromRGB(10, 25, 45)
+EspPartList.BackgroundTransparency = 0.02
+EspPartList.BorderSizePixel = 0
+EspPartList.Visible = false
+EspPartList.ClipsDescendants = true
+EspPartList.ZIndex = 40
+EspPartList.Parent = EspPartRow
+
+local EspPartListCorner = Instance.new("UICorner")
+EspPartListCorner.CornerRadius = UDim.new(0, 10)
+EspPartListCorner.Parent = EspPartList
+
+local EspPartListStroke = Instance.new("UIStroke")
+EspPartListStroke.Color = Color3.fromRGB(65, 105, 155)
+EspPartListStroke.Transparency = 0.2
+EspPartListStroke.Thickness = 1
+EspPartListStroke.Parent = EspPartList
+
+local EspPartOptions = {"All", "Head", "Torso"}
+local EspPartButtons = {}
+
+local function CreateEspPartOption(Name, Index)
+    local Button = Instance.new("TextButton")
+    Button.Name = Name .. "Option"
+    Button.Size = UDim2.new(1, -8, 0, 36)
+    Button.Position = UDim2.new(0, 4, 0, (Index - 1) * 36 + 4)
+    Button.BackgroundColor3 = Color3.fromRGB(18, 42, 70)
+    Button.BackgroundTransparency = 0.1
+    Button.BorderSizePixel = 0
+    Button.Text = Name
+    Button.TextColor3 = Color3.fromRGB(220, 230, 245)
+    Button.TextSize = 13
+    Button.Font = Enum.Font.GothamMedium
+    Button.AutoButtonColor = false
+    Button.ZIndex = 41
+    Button.Parent = EspPartList
+
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 8)
+    Corner.Parent = Button
+
+    Button.MouseEnter:Connect(function()
+        Button.BackgroundColor3 = Color3.fromRGB(25, 52, 85)
+    end)
+
+    Button.MouseLeave:Connect(function()
+        Button.BackgroundColor3 = Color3.fromRGB(18, 42, 70)
+    end)
+
+    Button.MouseButton1Click:Connect(function()
+        EspPartMode = Name
+        EspPartDropdown.Text = Name
+        EspPartList.Visible = false
+        EspPartList.Size = UDim2.new(0, 125, 0, 0)
+
+        if EspEnabled then
+            ApplyESPToAll()
+        end
+    end)
+
+    EspPartButtons[Name] = Button
+end
+
+for Index, Name in ipairs(EspPartOptions) do
+    CreateEspPartOption(Name, Index)
+end
+
+EspPartDropdown.MouseButton1Click:Connect(function()
+    local Opening = not EspPartList.Visible
+    EspPartList.Visible = Opening
+    if Opening then
+        EspPartList.Size = UDim2.new(0, 125, 0, 112)
+    else
+        EspPartList.Size = UDim2.new(0, 125, 0, 0)
+    end
+end)
+
+--//==================================================
+--// ESP STATE + TWEENS
+--//==================================================
+
+local EspEnabled = false
+
+local EspTweenInfo = TweenInfo.new(
+    0.25,
+    Enum.EasingStyle.Quart,
+    Enum.EasingDirection.Out
+)
+
+local EspSwitchTween
+local EspKnobTween
+
+--//==================================================
+--// ESP EXCLUDED BODY PARTS
+--// These are custom Rivals hitbox parts and will NOT receive ESP boxes.
+--//==================================================
+
+local ESPExcludedParts = {
+    FakeMass = true,
+    HitboxBody = true,
+    HitboxBodySmall = true,
+    HitboxHead = true,
+    HitboxHeadSmall = true,
+    PhysicalHitboxHead = true,
+}
+
+--//==================================================
+--// REMOVE ESP
+--//==================================================
+
+local function RemoveESP(character)
+    if not character then
+        return
+    end
+
+    for _, obj in ipairs(character:GetDescendants()) do
+        if obj:IsA("BoxHandleAdornment") and obj.Name == "ESPBox" then
+            obj:Destroy()
+        end
+    end
+end
+
+--//==================================================
+--// ESP PART FILTER
+--//==================================================
+
+local function ShouldESPPart(part)
+    if not part:IsA("BasePart") then
+        return false
+    end
+
+    if ESPExcludedParts[part.Name] then
+        return false
+    end
+
+    if EspPartMode == "All" then
+        return true
+    elseif EspPartMode == "Head" then
+        return part.Name == "Head"
+    elseif EspPartMode == "Torso" then
+        return part.Name == "LowerTorso" or part.Name == "UpperTorso"
+    end
+
+    return false
+end
+
+--//==================================================
+--// APPLY ESP
+--//==================================================
+
+local function ApplyESP(character)
+    if not EspEnabled or not character then
+        return
+    end
+
+    RemoveESP(character)
+
+    for _, part in ipairs(character:GetDescendants()) do
+        if ShouldESPPart(part) then
+            local box = Instance.new("BoxHandleAdornment")
+            box.Name = "ESPBox"
+            box.Size = part.Size
+            box.Adornee = part
+            box.Color3 = Color3.new(1, 0, 0)
+            box.AlwaysOnTop = true
+            box.ZIndex = 10
+            box.Transparency = 0.5
+            box.Parent = character
+        end
+    end
+end
+
+--//==================================================
+--// APPLY ESP TO EVERY PLAYER
+--//==================================================
+
+local function ApplyESPToAll()
+    if not EspEnabled then
+        return
+    end
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            ApplyESP(player.Character)
+        end
+    end
+end
+
+--//==================================================
+--// REMOVE ESP FROM EVERY PLAYER
+--//==================================================
+
+local function RemoveESPFromAll()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            RemoveESP(player.Character)
+        end
+    end
+end
+
+--//==================================================
+--// UPDATE ESP SWITCH
+--//==================================================
+
+local function UpdateESPVisual(Animated)
+    if EspSwitchTween then
+        EspSwitchTween:Cancel()
+    end
+
+    if EspKnobTween then
+        EspKnobTween:Cancel()
+    end
+
+    local switchColor
+    local knobColor
+    local knobPosition
+
+    if EspEnabled then
+        switchColor = Color3.fromRGB(45, 140, 75)
+        knobColor = Color3.fromRGB(255, 255, 255)
+        knobPosition = UDim2.new(1, -27, 0.5, -12)
+    else
+        switchColor = Color3.fromRGB(35, 50, 68)
+        knobColor = Color3.fromRGB(180, 190, 205)
+        knobPosition = UDim2.new(0, 3, 0.5, -12)
+    end
+
+    if Animated then
+        EspSwitchTween = TweenService:Create(
+            EspSwitch,
+            EspTweenInfo,
+            {BackgroundColor3 = switchColor}
+        )
+
+        EspKnobTween = TweenService:Create(
+            EspKnob,
+            EspTweenInfo,
+            {
+                Position = knobPosition,
+                BackgroundColor3 = knobColor
+            }
+        )
+
+        EspSwitchTween:Play()
+        EspKnobTween:Play()
+    else
+        EspSwitch.BackgroundColor3 = switchColor
+        EspKnob.BackgroundColor3 = knobColor
+        EspKnob.Position = knobPosition
+    end
+end
+
+UpdateESPVisual(false)
+
+EspSwitch.MouseButton1Click:Connect(function()
+    EspEnabled = not EspEnabled
+    UpdateESPVisual(true)
+
+    if EspEnabled then
+        ApplyESPToAll()
+    else
+        RemoveESPFromAll()
+    end
+end)
+
+--//==================================================
+--// AIMBOT
+--// UI CONTROLS ARE READY FOR THE AIMBOT LOGIC.
+--//==================================================
+
+local AimbotEnabled = false
+local FOVCircleEnabled = false
+local FOVCircleSize = 100
+
+local function CreateToggleRow(Name, DisplayText, PositionY)
+    local Row = Instance.new("Frame")
+    Row.Name = Name .. "Row"
+    Row.Size = UDim2.new(1, 0, 0, 52)
+    Row.Position = UDim2.new(0, 0, 0, PositionY)
+    Row.BackgroundColor3 = Color3.fromRGB(10, 25, 45)
+    Row.BackgroundTransparency = 0.15
+    Row.BorderSizePixel = 0
+    Row.Parent = AimbotPage
+
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 12)
+    Corner.Parent = Row
+
+    local Stroke = Instance.new("UIStroke")
+    Stroke.Color = Color3.fromRGB(55, 100, 155)
+    Stroke.Transparency = 0.55
+    Stroke.Thickness = 1
+    Stroke.Parent = Row
+
+    local Text = Instance.new("TextLabel")
+    Text.Name = Name .. "Text"
+    Text.Size = UDim2.new(1, -100, 1, 0)
+    Text.Position = UDim2.new(0, 16, 0, 0)
+    Text.BackgroundTransparency = 1
+    Text.Text = DisplayText
+    Text.TextColor3 = Color3.fromRGB(220, 230, 245)
+    Text.TextSize = 14
+    Text.Font = Enum.Font.GothamMedium
+    Text.TextXAlignment = Enum.TextXAlignment.Left
+    Text.Parent = Row
+
+    local Switch = Instance.new("TextButton")
+    Switch.Name = Name .. "Switch"
+    Switch.Size = UDim2.new(0, 58, 0, 30)
+    Switch.Position = UDim2.new(1, -70, 0.5, -15)
+    Switch.BorderSizePixel = 0
+    Switch.Text = ""
+    Switch.AutoButtonColor = false
+    Switch.Parent = Row
+
+    local SwitchCorner = Instance.new("UICorner")
+    SwitchCorner.CornerRadius = UDim.new(1, 0)
+    SwitchCorner.Parent = Switch
+
+    local Knob = Instance.new("Frame")
+    Knob.Name = "Knob"
+    Knob.Size = UDim2.new(0, 24, 0, 24)
+    Knob.Position = UDim2.new(0, 3, 0.5, -12)
+    Knob.BorderSizePixel = 0
+    Knob.Parent = Switch
+
+    local KnobCorner = Instance.new("UICorner")
+    KnobCorner.CornerRadius = UDim.new(1, 0)
+    KnobCorner.Parent = Knob
+
+    local State = false
+    local SwitchTween
+    local KnobTween
+
+    local function UpdateVisual(Animated)
+        if SwitchTween then SwitchTween:Cancel() end
+        if KnobTween then KnobTween:Cancel() end
+
+        local SwitchColor
+        local KnobColor
+        local KnobPosition
+
+        if State then
+            SwitchColor = Color3.fromRGB(45, 140, 75)
+            KnobColor = Color3.fromRGB(255, 255, 255)
+            KnobPosition = UDim2.new(1, -27, 0.5, -12)
+        else
+            SwitchColor = Color3.fromRGB(35, 50, 68)
+            KnobColor = Color3.fromRGB(180, 190, 205)
+            KnobPosition = UDim2.new(0, 3, 0.5, -12)
+        end
+
+        if Animated then
+            SwitchTween = TweenService:Create(Switch, EspTweenInfo, {BackgroundColor3 = SwitchColor})
+            KnobTween = TweenService:Create(Knob, EspTweenInfo, {
+                Position = KnobPosition,
+                BackgroundColor3 = KnobColor
+            })
+            SwitchTween:Play()
+            KnobTween:Play()
+        else
+            Switch.BackgroundColor3 = SwitchColor
+            Knob.BackgroundColor3 = KnobColor
+            Knob.Position = KnobPosition
+        end
+    end
+
+    UpdateVisual(false)
+
+    Switch.MouseButton1Click:Connect(function()
+        State = not State
+        UpdateVisual(true)
+
+        if Name == "Aimbot" then
+            AimbotEnabled = State
+        elseif Name == "FOVCircle" then
+            FOVCircleEnabled = State
+        end
+    end)
+
+    return Row
+end
+
+CreateToggleRow("Aimbot", "Aimbot", 129)
+CreateToggleRow("FOVCircle", "FOV Circle", 191)
+
+--//==================================================
+--// FOV CIRCLE SIZE SLIDER
+--//==================================================
+
+local FOVSliderRow = Instance.new("Frame")
+FOVSliderRow.Name = "FOVCircleSliderRow"
+FOVSliderRow.Size = UDim2.new(1, 0, 0, 78)
+FOVSliderRow.Position = UDim2.new(0, 0, 0, 253)
+FOVSliderRow.BackgroundColor3 = Color3.fromRGB(10, 25, 45)
+FOVSliderRow.BackgroundTransparency = 0.15
+FOVSliderRow.BorderSizePixel = 0
+FOVSliderRow.Parent = AimbotPage
+
+local FOVSliderCorner = Instance.new("UICorner")
+FOVSliderCorner.CornerRadius = UDim.new(0, 12)
+FOVSliderCorner.Parent = FOVSliderRow
+
+local FOVSliderStroke = Instance.new("UIStroke")
+FOVSliderStroke.Color = Color3.fromRGB(55, 100, 155)
+FOVSliderStroke.Transparency = 0.55
+FOVSliderStroke.Thickness = 1
+FOVSliderStroke.Parent = FOVSliderRow
+
+local FOVSliderLabel = Instance.new("TextLabel")
+FOVSliderLabel.Name = "FOVCircleSliderLabel"
+FOVSliderLabel.Size = UDim2.new(1, -32, 0, 25)
+FOVSliderLabel.Position = UDim2.new(0, 16, 0, 7)
+FOVSliderLabel.BackgroundTransparency = 1
+FOVSliderLabel.Text = "FOV Circle Size: 100"
+FOVSliderLabel.TextColor3 = Color3.fromRGB(220, 230, 245)
+FOVSliderLabel.TextSize = 14
+FOVSliderLabel.Font = Enum.Font.GothamMedium
+FOVSliderLabel.TextXAlignment = Enum.TextXAlignment.Left
+FOVSliderLabel.Parent = FOVSliderRow
+
+local FOVSlider = Instance.new("TextButton")
+FOVSlider.Name = "FOVCircleSlider"
+FOVSlider.Size = UDim2.new(1, -32, 0, 12)
+FOVSlider.Position = UDim2.new(0, 16, 0, 46)
+FOVSlider.BackgroundColor3 = Color3.fromRGB(35, 50, 68)
+FOVSlider.BorderSizePixel = 0
+FOVSlider.Text = ""
+FOVSlider.AutoButtonColor = false
+FOVSlider.Active = true
+FOVSlider.Parent = FOVSliderRow
+
+local FOVSliderCorner2 = Instance.new("UICorner")
+FOVSliderCorner2.CornerRadius = UDim.new(1, 0)
+FOVSliderCorner2.Parent = FOVSlider
+
+local FOVSliderFill = Instance.new("Frame")
+FOVSliderFill.Name = "Fill"
+FOVSliderFill.Size = UDim2.new(0, 0, 1, 0)
+FOVSliderFill.BackgroundColor3 = Color3.fromRGB(65, 105, 155)
+FOVSliderFill.BorderSizePixel = 0
+FOVSliderFill.Parent = FOVSlider
+
+local FOVSliderFillCorner = Instance.new("UICorner")
+FOVSliderFillCorner.CornerRadius = UDim.new(1, 0)
+FOVSliderFillCorner.Parent = FOVSliderFill
+
+local FOVSliderKnob = Instance.new("Frame")
+FOVSliderKnob.Name = "Knob"
+FOVSliderKnob.Size = UDim2.new(0, 18, 0, 18)
+FOVSliderKnob.AnchorPoint = Vector2.new(0.5, 0.5)
+FOVSliderKnob.Position = UDim2.new(0, 0, 0.5, 0)
+FOVSliderKnob.BackgroundColor3 = Color3.fromRGB(225, 235, 250)
+FOVSliderKnob.BorderSizePixel = 0
+FOVSliderKnob.Parent = FOVSlider
+
+local FOVSliderKnobCorner = Instance.new("UICorner")
+FOVSliderKnobCorner.CornerRadius = UDim.new(1, 0)
+FOVSliderKnobCorner.Parent = FOVSliderKnob
+
+local FOVDragging = false
+local FOVMinimum = 50
+local FOVMaximum = 300
+
+local function UpdateFOVSlider(Input)
+    local X = Input.Position.X
+    local StartX = FOVSlider.AbsolutePosition.X
+    local Width = FOVSlider.AbsoluteSize.X
+    local Percent = math.clamp((X - StartX) / Width, 0, 1)
+
+    FOVCircleSize = math.floor(FOVMinimum + ((FOVMaximum - FOVMinimum) * Percent) + 0.5)
+    FOVSliderFill.Size = UDim2.new(Percent, 0, 1, 0)
+    FOVSliderKnob.Position = UDim2.new(Percent, 0, 0.5, 0)
+    FOVSliderLabel.Text = "FOV Circle Size: " .. tostring(FOVCircleSize)
+end
+
+FOVSlider.InputBegan:Connect(function(Input)
+    if Input.UserInputType == Enum.UserInputType.MouseButton1
+        or Input.UserInputType == Enum.UserInputType.Touch then
+        FOVDragging = true
+        UpdateFOVSlider(Input)
+    end
+end)
+
+FOVSlider.InputChanged:Connect(function(Input)
+    if Input.UserInputType == Enum.UserInputType.MouseMovement
+        or Input.UserInputType == Enum.UserInputType.Touch then
+        if FOVDragging then
+            UpdateFOVSlider(Input)
+        end
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(Input)
+    if FOVDragging and (
+        Input.UserInputType == Enum.UserInputType.MouseMovement
+        or Input.UserInputType == Enum.UserInputType.Touch
+    ) then
+        UpdateFOVSlider(Input)
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(Input)
+    if Input.UserInputType == Enum.UserInputType.MouseButton1
+        or Input.UserInputType == Enum.UserInputType.Touch then
+        FOVDragging = false
+    end
+end)
+
+--//==================================================
+--// EXISTING PLAYERS
+--//==================================================
+
+for _, player in ipairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then
+        player.CharacterAdded:Connect(function(character)
+            if EspEnabled then
+                task.wait(0.15)
+                ApplyESP(character)
+            end
+        end)
+    end
+end
+
+--//==================================================
+--// NEW PLAYERS
+--//==================================================
+
+Players.PlayerAdded:Connect(function(player)
+    if player == LocalPlayer then
+        return
+    end
+
+    player.CharacterAdded:Connect(function(character)
+        if EspEnabled then
+            task.wait(0.15)
+            ApplyESP(character)
+        end
+    end)
+end)
+
+--//==================================================
+--// PLAYER REMOVING
+--//==================================================
+
+Players.PlayerRemoving:Connect(function(player)
+    if player.Character then
+        RemoveESP(player.Character)
+    end
+end)
+
+--//==================================================
+
+--// SETTINGS PAGE
+
+--//==================================================
+
+local SettingsPage = Instance.new("ScrollingFrame")
+
+SettingsPage.Name = "SettingsPage"
+
+SettingsPage.Size = UDim2.new(1, 0, 1, 0)
+
+SettingsPage.BackgroundTransparency = 1
+
+SettingsPage.BorderSizePixel = 0
+
+SettingsPage.Visible = false
+
+SettingsPage.ScrollBarThickness = 5
+
+SettingsPage.ScrollBarImageTransparency = 0.25
+
+SettingsPage.ScrollBarImageColor3 = Color3.fromRGB(80, 120, 170)
+
+SettingsPage.CanvasSize = UDim2.new(0, 0, 0, 0)
+
+SettingsPage.AutomaticCanvasSize = Enum.AutomaticSize.Y
+
+SettingsPage.ScrollingDirection = Enum.ScrollingDirection.Y
+
+SettingsPage.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
+
+SettingsPage.ScrollingEnabled = true
+
+SettingsPage.Active = true
+
+SettingsPage.ZIndex = 1
+
+SettingsPage.Parent = Content
+
+--//==================================================
+
+--// SETTINGS - OPEN/CLOSE
+
+--//==================================================
+
+local OpenCloseRow = Instance.new("Frame")
+
+OpenCloseRow.Name = "OpenCloseRow"
+
+OpenCloseRow.Size = UDim2.new(1, 0, 0, 52)
+
+OpenCloseRow.Position = UDim2.new(0, 0, 0, 5)
+
+OpenCloseRow.BackgroundColor3 = Color3.fromRGB(10, 25, 45)
+
+OpenCloseRow.BackgroundTransparency = 0.15
+
+OpenCloseRow.BorderSizePixel = 0
+
+OpenCloseRow.Parent = SettingsPage
+
+local OpenCloseCorner = Instance.new("UICorner")
+
+OpenCloseCorner.CornerRadius = UDim.new(0, 12)
+
+OpenCloseCorner.Parent = OpenCloseRow
+
+local OpenCloseStroke = Instance.new("UIStroke")
+
+OpenCloseStroke.Color = Color3.fromRGB(55, 100, 155)
+
+OpenCloseStroke.Transparency = 0.55
+
+OpenCloseStroke.Thickness = 1
+
+OpenCloseStroke.Parent = OpenCloseRow
+
+local OpenCloseText = Instance.new("TextLabel")
+
+OpenCloseText.Name = "OpenCloseText"
+
+OpenCloseText.Size = UDim2.new(1, -130, 1, 0)
+
+OpenCloseText.Position = UDim2.new(0, 16, 0, 0)
+
+OpenCloseText.BackgroundTransparency = 1
+
+OpenCloseText.Text = "Open/Close Button"
+
+OpenCloseText.TextColor3 = Color3.fromRGB(220, 230, 245)
+
+OpenCloseText.TextSize = 14
+
+OpenCloseText.Font = Enum.Font.GothamMedium
+
+OpenCloseText.TextXAlignment = Enum.TextXAlignment.Left
+
+OpenCloseText.Parent = OpenCloseRow
+
+--//==================================================
+
+--// KEYBIND BUTTON
+
+--//==================================================
+
+local KeybindButton = Instance.new("TextButton")
+
+KeybindButton.Name = "KeybindButton"
+
+KeybindButton.Size = UDim2.new(0, 70, 0, 34)
+
+KeybindButton.Position = UDim2.new(1, -82, 0.5, -17)
+
+KeybindButton.BackgroundColor3 = Color3.fromRGB(18, 42, 70)
+
+KeybindButton.BackgroundTransparency = 0.05
+
+KeybindButton.BorderSizePixel = 0
+
+KeybindButton.Text = OpenCloseKey.Name
+
+KeybindButton.TextColor3 = Color3.fromRGB(225, 235, 250)
+
+KeybindButton.TextSize = 14
+
+KeybindButton.Font = Enum.Font.GothamMedium
+
+KeybindButton.AutoButtonColor = false
+
+KeybindButton.Parent = OpenCloseRow
+
+local KeybindCorner = Instance.new("UICorner")
+
+KeybindCorner.CornerRadius = UDim.new(0, 10)
+
+KeybindCorner.Parent = KeybindButton
+
+local KeybindBorder = Instance.new("UIStroke")
+
+KeybindBorder.Name = "KeybindBorder"
+
+KeybindBorder.Color = Color3.fromRGB(215, 220, 230)
+
+KeybindBorder.Transparency = 0.1
+
+KeybindBorder.Thickness = 1.5
+
+KeybindBorder.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+KeybindBorder.Parent = KeybindButton
+
+--//==================================================
+
+--// AUTO LOAD ROW
+
+--//==================================================
+
+local AutoLoadRow = Instance.new("Frame")
+
+AutoLoadRow.Name = "AutoLoadRow"
+
+AutoLoadRow.Size = UDim2.new(1, 0, 0, 52)
+
+AutoLoadRow.Position = UDim2.new(0, 0, 0, 67)
+
+AutoLoadRow.BackgroundColor3 = Color3.fromRGB(10, 25, 45)
+
+AutoLoadRow.BackgroundTransparency = 0.15
+
+AutoLoadRow.BorderSizePixel = 0
+
+AutoLoadRow.Parent = SettingsPage
+
+local AutoLoadCorner = Instance.new("UICorner")
+
+AutoLoadCorner.CornerRadius = UDim.new(0, 12)
+
+AutoLoadCorner.Parent = AutoLoadRow
+
+local AutoLoadStroke = Instance.new("UIStroke")
+
+AutoLoadStroke.Color = Color3.fromRGB(55, 100, 155)
+
+AutoLoadStroke.Transparency = 0.55
+
+AutoLoadStroke.Thickness = 1
+
+AutoLoadStroke.Parent = AutoLoadRow
+
+local AutoLoadText = Instance.new("TextLabel")
+
+AutoLoadText.Name = "AutoLoadText"
+
+AutoLoadText.Size = UDim2.new(1, -100, 1, 0)
+
+AutoLoadText.Position = UDim2.new(0, 16, 0, 0)
+
+AutoLoadText.BackgroundTransparency = 1
+
+AutoLoadText.Text = "Auto Load"
+
+AutoLoadText.TextColor3 = Color3.fromRGB(220, 230, 245)
+
+AutoLoadText.TextSize = 14
+
+AutoLoadText.Font = Enum.Font.GothamMedium
+
+AutoLoadText.TextXAlignment = Enum.TextXAlignment.Left
+
+AutoLoadText.Parent = AutoLoadRow
+
+--//==================================================
+
+--// AUTO LOAD SWITCH
+
+--//==================================================
+
+local AutoLoadSwitch = Instance.new("TextButton")
+
+AutoLoadSwitch.Name = "AutoLoadSwitch"
+
+AutoLoadSwitch.Size = UDim2.new(0, 58, 0, 30)
+
+AutoLoadSwitch.Position = UDim2.new(1, -70, 0.5, -15)
+
+AutoLoadSwitch.BorderSizePixel = 0
+
+AutoLoadSwitch.Text = ""
+
+AutoLoadSwitch.AutoButtonColor = false
+
+AutoLoadSwitch.Parent = AutoLoadRow
+
+local AutoLoadToggleSound = Instance.new("Sound")
+
+AutoLoadToggleSound.Name = "AutoLoadToggleSound"
+
+AutoLoadToggleSound.SoundId = "rbxassetid://113833803825898"
+
+AutoLoadToggleSound.Volume = 0.90
+
+AutoLoadToggleSound.Parent = AutoLoadSwitch
+
+local AutoLoadSwitchCorner = Instance.new("UICorner")
+
+AutoLoadSwitchCorner.CornerRadius = UDim.new(1, 0)
+
+AutoLoadSwitchCorner.Parent = AutoLoadSwitch
+
+local AutoLoadKnob = Instance.new("Frame")
+
+AutoLoadKnob.Name = "Knob"
+
+AutoLoadKnob.Size = UDim2.new(0, 24, 0, 24)
+
+AutoLoadKnob.Position = UDim2.new(0, 3, 0.5, -12)
+
+AutoLoadKnob.BorderSizePixel = 0
+
+AutoLoadKnob.Parent = AutoLoadSwitch
+
+local AutoLoadKnobCorner = Instance.new("UICorner")
+
+AutoLoadKnobCorner.CornerRadius = UDim.new(1, 0)
+
+AutoLoadKnobCorner.Parent = AutoLoadKnob
+
+--// Smooth toggle animation
+
+local AutoLoadTweenInfo = TweenInfo.new(
+
+0.25,
+
+Enum.EasingStyle.Quart,
+
+Enum.EasingDirection.Out
+
+)
+
+local AutoLoadSwitchTween
+
+local AutoLoadKnobTween
+
+local function UpdateAutoLoadVisual(Animated)
+
+if AutoLoadSwitchTween then
+
+    AutoLoadSwitchTween:Cancel()
+
+end
+
+
+
+if AutoLoadKnobTween then
+
+    AutoLoadKnobTween:Cancel()
+
+end
+
+
+
+local SwitchColor
+
+local KnobColor
+
+local KnobPosition
+
+
+
+if AutoLoadEnabled then
+
+    SwitchColor = Color3.fromRGB(45, 140, 75)
+
+    KnobColor = Color3.fromRGB(255, 255, 255)
+
+    KnobPosition = UDim2.new(1, -27, 0.5, -12)
+
+else
+
+    SwitchColor = Color3.fromRGB(35, 50, 68)
+
+    KnobColor = Color3.fromRGB(180, 190, 205)
+
+    KnobPosition = UDim2.new(0, 3, 0.5, -12)
+
+end
+
+
+
+if Animated then
+
+    AutoLoadSwitchTween = TweenService:Create(
+
+        AutoLoadSwitch,
+
+        AutoLoadTweenInfo,
+
+        {
+
+            BackgroundColor3 = SwitchColor
+
+        }
+
+    )
+
+
+
+    AutoLoadKnobTween = TweenService:Create(
+
+        AutoLoadKnob,
+
+        AutoLoadTweenInfo,
+
+        {
+
+            Position = KnobPosition,
+
+            BackgroundColor3 = KnobColor
+
+        }
+
+    )
+
+
+
+    AutoLoadSwitchTween:Play()
+
+    AutoLoadKnobTween:Play()
+
+else
+
+    AutoLoadSwitch.BackgroundColor3 = SwitchColor
+
+    AutoLoadKnob.BackgroundColor3 = KnobColor
+
+    AutoLoadKnob.Position = KnobPosition
+
+end
+
+end
+
+UpdateAutoLoadVisual(false)
+
+AutoLoadSwitch.MouseButton1Click:Connect(function()
+
+AutoLoadEnabled = not AutoLoadEnabled
+
+
+
+AutoLoadToggleSound:Play()
+
+
+
+SaveAutoLoadState()
+
+UpdateAutoLoadVisual()
+
+
+
+if AutoLoadEnabled then
+
+    QueueAutoLoad()
+
+end
+
+end)
+
+--//==================================================
+--// CHANGELOG / SECRET PAGE
+--// Edit ONLY the text below to update the changelog.
+--//==================================================
+
+local ChangelogVersion = "V1.0.7"
+
+local ChangelogText = [[
+• Added Changelog tab.
+• Added an "Aimbot" tab.
+• Added Esp. (Test)
+• Added a draggable mobile floating button.
+• Added ESP body-part selector: All, Head, and Torso.
+• Added Aimbot, FOV Circle, and FOV Circle size controls.
+• Fixed rejoin button ONLY for public servers.
+(Private servers are still buggy)
+]]
+
+--// SECRET CHANGELOG PAGE
+local ChangelogPage = Instance.new("ScrollingFrame")
+ChangelogPage.Name = "ChangelogPage"
+ChangelogPage.Size = UDim2.new(1, 0, 1, 0)
+ChangelogPage.BackgroundTransparency = 1
+ChangelogPage.BorderSizePixel = 0
+ChangelogPage.Visible = false
+ChangelogPage.ScrollBarThickness = 5
+ChangelogPage.ScrollBarImageTransparency = 0.25
+ChangelogPage.ScrollBarImageColor3 = Color3.fromRGB(80, 120, 170)
+ChangelogPage.CanvasSize = UDim2.new(0, 0, 0, 0)
+ChangelogPage.AutomaticCanvasSize = Enum.AutomaticSize.Y
+ChangelogPage.ScrollingDirection = Enum.ScrollingDirection.Y
+ChangelogPage.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
+ChangelogPage.ScrollingEnabled = true
+ChangelogPage.Active = true
+ChangelogPage.ZIndex = 2
+ChangelogPage.Parent = Content
+
+local ChangelogCard = Instance.new("Frame")
+ChangelogCard.Name = "ChangelogCard"
+ChangelogCard.Size = UDim2.new(1, -2, 0, 260)
+ChangelogCard.Position = UDim2.new(0, 1, 0, 5)
+ChangelogCard.BackgroundColor3 = Color3.fromRGB(10, 25, 45)
+ChangelogCard.BackgroundTransparency = 0.15
+ChangelogCard.BorderSizePixel = 0
+ChangelogCard.Parent = ChangelogPage
+
+local ChangelogCardCorner = Instance.new("UICorner")
+ChangelogCardCorner.CornerRadius = UDim.new(0, 12)
+ChangelogCardCorner.Parent = ChangelogCard
+
+local ChangelogCardStroke = Instance.new("UIStroke")
+ChangelogCardStroke.Color = Color3.fromRGB(55, 100, 155)
+ChangelogCardStroke.Transparency = 0.55
+ChangelogCardStroke.Thickness = 1
+ChangelogCardStroke.Parent = ChangelogCard
+
+local ChangelogVersionLabel = Instance.new("TextLabel")
+ChangelogVersionLabel.Name = "Version"
+ChangelogVersionLabel.Size = UDim2.new(1, -32, 0, 35)
+ChangelogVersionLabel.Position = UDim2.new(0, 16, 0, 14)
+ChangelogVersionLabel.BackgroundTransparency = 1
+ChangelogVersionLabel.Text = ChangelogVersion
+ChangelogVersionLabel.TextColor3 = Color3.fromRGB(230, 240, 255)
+ChangelogVersionLabel.TextSize = 18
+ChangelogVersionLabel.Font = Enum.Font.GothamSemibold
+ChangelogVersionLabel.TextXAlignment = Enum.TextXAlignment.Left
+ChangelogVersionLabel.Parent = ChangelogCard
+
+local ChangelogBody = Instance.new("TextLabel")
+ChangelogBody.Name = "ChangelogBody"
+ChangelogBody.Size = UDim2.new(1, -32, 0, 190)
+ChangelogBody.Position = UDim2.new(0, 16, 0, 55)
+ChangelogBody.BackgroundTransparency = 1
+ChangelogBody.Text = ChangelogText
+ChangelogBody.TextColor3 = Color3.fromRGB(200, 215, 235)
+ChangelogBody.TextSize = 14
+ChangelogBody.Font = Enum.Font.Gotham
+ChangelogBody.TextXAlignment = Enum.TextXAlignment.Left
+ChangelogBody.TextYAlignment = Enum.TextYAlignment.Top
+ChangelogBody.TextWrapped = true
+ChangelogBody.Parent = ChangelogCard
+
+--// BOTTOM CHANGELOG BAR
+local BottomBar = Instance.new("TextButton")
+BottomBar.Name = "ChangelogButton"
+BottomBar.Size = UDim2.new(1, -30, 0, 28)
+BottomBar.Position = UDim2.new(0, 15, 1, -33)
+BottomBar.BackgroundColor3 = Color3.fromRGB(10, 25, 45)
+BottomBar.BackgroundTransparency = 0.15
+BottomBar.BorderSizePixel = 0
+BottomBar.AutoButtonColor = false
+BottomBar.Text = ""
+BottomBar.ZIndex = 20
+BottomBar.Parent = Main
+
+local BottomBarCorner = Instance.new("UICorner")
+BottomBarCorner.CornerRadius = UDim.new(0, 9)
+BottomBarCorner.Parent = BottomBar
+
+local ChangelogLabel = Instance.new("TextLabel")
+ChangelogLabel.Name = "ChangelogLabel"
+ChangelogLabel.Size = UDim2.new(0.5, -10, 1, 0)
+ChangelogLabel.Position = UDim2.new(0, 10, 0, 0)
+ChangelogLabel.BackgroundTransparency = 1
+ChangelogLabel.Text = "Changelog"
+ChangelogLabel.TextColor3 = Color3.fromRGB(165, 185, 210)
+ChangelogLabel.TextSize = 12
+ChangelogLabel.Font = Enum.Font.GothamMedium
+ChangelogLabel.TextXAlignment = Enum.TextXAlignment.Left
+ChangelogLabel.ZIndex = 21
+ChangelogLabel.Parent = BottomBar
+
+local VersionLabel = Instance.new("TextLabel")
+VersionLabel.Name = "VersionLabel"
+VersionLabel.Size = UDim2.new(0.5, -10, 1, 0)
+VersionLabel.Position = UDim2.new(0.5, 0, 0, 0)
+VersionLabel.BackgroundTransparency = 1
+VersionLabel.Text = ChangelogVersion
+VersionLabel.TextColor3 = Color3.fromRGB(135, 155, 180)
+VersionLabel.TextSize = 12
+VersionLabel.Font = Enum.Font.GothamMedium
+VersionLabel.TextXAlignment = Enum.TextXAlignment.Right
+VersionLabel.ZIndex = 21
+VersionLabel.Parent = BottomBar
+
+local ChangelogOpen = false
+
+--//==================================================
+
+--// DEVICE DETECTION
+
+--//==================================================
+
+local IsMobile = UserInputService.TouchEnabled
+    and not UserInputService.KeyboardEnabled
+
+--//==================================================
+
+--// TOGGLE GUI
+
+--//==================================================
+
+local function ToggleGUI()
+
+if BlurTween then
+
+    BlurTween:Cancel()
+
+    BlurTween = nil
+
+end
+
+
+
+if ScreenGui.Enabled then
+
+    ScreenGui.Enabled = false
+
+    Blur.Size = 8
+
+
+
+    BlurTween = TweenService:Create(
+
+        Blur,
+
+        BlurTweenInfo,
+
+        {
+
+            Size = 0
+
+        }
+
+    )
+
+
+
+    BlurTween:Play()
+
+else
+
+    ScreenGui.Enabled = true
+
+    Blur.Size = 0
+
+
+
+    BlurTween = TweenService:Create(
+
+        Blur,
+
+        BlurTweenInfo,
+
+        {
+
+            Size = 8
+
+        }
+
+    )
+
+
+
+    BlurTween:Play()
+
+end
+
+end
+
+--//==================================================
+
+--// MOBILE FLOATING BUTTON
+--// Only appears on mobile devices.
+--// The button stays visible while the main GUI is hidden.
+--// It can be dragged anywhere on the screen and tapped to toggle the GUI.
+
+--//==================================================
+
+local MobileButtonGui
+local MobileButton
+
+if IsMobile then
+
+    MobileButtonGui = Instance.new("ScreenGui")
+    MobileButtonGui.Name = "TuffMobileButtonGUI"
+    MobileButtonGui.ResetOnSpawn = false
+    MobileButtonGui.IgnoreGuiInset = true
+    MobileButtonGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+    if syn and syn.protect_gui then
+        syn.protect_gui(MobileButtonGui)
+    end
+
+    MobileButtonGui.Parent = GuiParent
+
+    MobileButton = Instance.new("TextButton")
+    MobileButton.Name = "MobileFloatingButton"
+    MobileButton.Size = UDim2.new(0, 58, 0, 58)
+    MobileButton.Position = UDim2.new(1, -78, 1, -145)
+    MobileButton.BackgroundColor3 = Color3.fromRGB(18, 42, 70)
+    MobileButton.BackgroundTransparency = 0.08
+    MobileButton.BorderSizePixel = 0
+    MobileButton.AutoButtonColor = false
+    MobileButton.Text = "T"
+    MobileButton.TextColor3 = Color3.fromRGB(230, 240, 255)
+    MobileButton.TextSize = 24
+    MobileButton.Font = Enum.Font.GothamBold
+    MobileButton.Active = true
+    MobileButton.ZIndex = 100
+    MobileButton.Parent = MobileButtonGui
+
+    local MobileButtonCorner = Instance.new("UICorner")
+    MobileButtonCorner.CornerRadius = UDim.new(0, 18)
+    MobileButtonCorner.Parent = MobileButton
+
+    local MobileButtonStroke = Instance.new("UIStroke")
+    MobileButtonStroke.Color = Color3.fromRGB(65, 105, 155)
+    MobileButtonStroke.Transparency = 0.25
+    MobileButtonStroke.Thickness = 1.5
+    MobileButtonStroke.Parent = MobileButton
+
+    local MobileButtonDragging = false
+    local MobileButtonDragStart = nil
+    local MobileButtonStartPosition = nil
+    local MobileButtonDragInput = nil
+    local MobileButtonMoved = false
+
+    local function UpdateMobileButtonDrag(Input)
+        if not MobileButtonDragStart or not MobileButtonStartPosition then
+            return
+        end
+
+        local Delta = Input.Position - MobileButtonDragStart
+
+        if math.abs(Delta.X) > 6 or math.abs(Delta.Y) > 6 then
+            MobileButtonMoved = true
+        end
+
+        MobileButton.Position = UDim2.new(
+            MobileButtonStartPosition.X.Scale,
+            MobileButtonStartPosition.X.Offset + Delta.X,
+            MobileButtonStartPosition.Y.Scale,
+            MobileButtonStartPosition.Y.Offset + Delta.Y
+        )
+    end
+
+    MobileButton.InputBegan:Connect(function(Input)
+        if Input.UserInputType == Enum.UserInputType.Touch
+            or Input.UserInputType == Enum.UserInputType.MouseButton1 then
+
+            MobileButtonDragging = true
+            MobileButtonMoved = false
+            MobileButtonDragStart = Input.Position
+            MobileButtonStartPosition = MobileButton.Position
+        end
+    end)
+
+    MobileButton.InputChanged:Connect(function(Input)
+        if Input.UserInputType == Enum.UserInputType.Touch
+            or Input.UserInputType == Enum.UserInputType.MouseMovement then
+
+            MobileButtonDragInput = Input
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(Input)
+        if Input == MobileButtonDragInput and MobileButtonDragging then
+            UpdateMobileButtonDrag(Input)
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(Input)
+        if Input.UserInputType == Enum.UserInputType.Touch
+            or Input.UserInputType == Enum.UserInputType.MouseButton1 then
+
+            if MobileButtonDragging then
+                MobileButtonDragging = false
+
+                if not MobileButtonMoved then
+                    ToggleGUI()
+                end
+            end
+        end
+    end)
+
+    MobileButton.MouseEnter:Connect(function()
+        MobileButton.BackgroundColor3 = Color3.fromRGB(25, 52, 85)
+    end)
+
+    MobileButton.MouseLeave:Connect(function()
+        MobileButton.BackgroundColor3 = Color3.fromRGB(18, 42, 70)
+    end)
+end
+
+--//==================================================
+
+--// KEYBIND HOVER
+
+--//==================================================
+
+KeybindButton.MouseEnter:Connect(function()
+
+if not WaitingForKey then
+
+    KeybindButton.BackgroundColor3 = Color3.fromRGB(25, 52, 85)
+
+end
+
+end)
+
+KeybindButton.MouseLeave:Connect(function()
+
+if not WaitingForKey then
+
+    KeybindButton.BackgroundColor3 = Color3.fromRGB(18, 42, 70)
+
+end
+
+end)
+
+--//==================================================
+
+--// KEYBIND INPUT
+
+--//==================================================
+
+KeybindButton.MouseButton1Click:Connect(function()
+
+WaitingForKey = true
+
+
+
+KeybindButton.Text = "..."
+
+KeybindButton.BackgroundColor3 = Color3.fromRGB(25, 52, 85)
+
+end)
+
+UserInputService.InputBegan:Connect(function(Input)
+
+if Input.UserInputType ~= Enum.UserInputType.Keyboard then
+
+    return
+
+end
+
+
+
+if WaitingForKey then
+
+    OpenCloseKey = Input.KeyCode
+
+
+
+    KeybindButton.Text = Input.KeyCode.Name
+
+    WaitingForKey = false
+
+
+
+    KeybindButton.BackgroundColor3 = Color3.fromRGB(18, 42, 70)
+
+
+
+    SaveKeybind()
+
+
+
+    return
+
+end
+
+
+
+if Input.KeyCode == OpenCloseKey then
+
+    ToggleGUI()
+
+end
+
+end)
+
+--//==================================================
+
+--// PAGE SWITCHING
+
+--//==================================================
+
+local function SetTabVisual(Tab, Active)
+    if Active then
+        Tab.BackgroundColor3 = Color3.fromRGB(18, 42, 70)
+        Tab.TextColor3 = Color3.fromRGB(230, 240, 255)
+    else
+        Tab.BackgroundColor3 = Color3.fromRGB(10, 25, 45)
+        Tab.TextColor3 = Color3.fromRGB(190, 205, 225)
+    end
+end
+
+local function ShowSkinPage()
+    SkinPage.Visible = true
+    AimbotPage.Visible = false
+    SettingsPage.Visible = false
+    ChangelogPage.Visible = false
+    ChangelogOpen = false
+
+    SetTabVisual(SkinChangerTab, true)
+    SetTabVisual(AimbotTab, false)
+    SetTabVisual(SettingsTab, false)
+end
+
+local function ShowAimbotPage()
+    SkinPage.Visible = false
+    AimbotPage.Visible = true
+    SettingsPage.Visible = false
+    ChangelogPage.Visible = false
+    ChangelogOpen = false
+
+    SetTabVisual(SkinChangerTab, false)
+    SetTabVisual(AimbotTab, true)
+    SetTabVisual(SettingsTab, false)
+end
+
+local function ShowSettingsPage()
+    SkinPage.Visible = false
+    AimbotPage.Visible = false
+    SettingsPage.Visible = true
+    ChangelogPage.Visible = false
+    ChangelogOpen = false
+
+    SetTabVisual(SkinChangerTab, false)
+    SetTabVisual(AimbotTab, false)
+    SetTabVisual(SettingsTab, true)
+end
+
+local function ShowChangelogPage()
+    SkinPage.Visible = false
+    AimbotPage.Visible = false
+    SettingsPage.Visible = false
+    ChangelogPage.Visible = true
+    ChangelogOpen = true
+
+    -- Secret page: top tabs stay visible and keep their normal appearance.
+    SetTabVisual(SkinChangerTab, false)
+    SetTabVisual(AimbotTab, false)
+    SetTabVisual(SettingsTab, false)
+end
+
+SettingsButton.MouseButton1Click:Connect(ShowSettingsPage)
+SkinChangerTab.MouseButton1Click:Connect(ShowSkinPage)
+AimbotTab.MouseButton1Click:Connect(ShowAimbotPage)
+SettingsTab.MouseButton1Click:Connect(ShowSettingsPage)
+BottomBar.MouseButton1Click:Connect(ShowChangelogPage)
+
+BottomBar.MouseEnter:Connect(function()
+    BottomBar.BackgroundColor3 = Color3.fromRGB(16, 34, 57)
+    ChangelogLabel.TextColor3 = Color3.fromRGB(220, 230, 245)
+    VersionLabel.TextColor3 = Color3.fromRGB(190, 205, 225)
+end)
+
+BottomBar.MouseLeave:Connect(function()
+    BottomBar.BackgroundColor3 = Color3.fromRGB(10, 25, 45)
+    ChangelogLabel.TextColor3 = Color3.fromRGB(165, 185, 210)
+    VersionLabel.TextColor3 = Color3.fromRGB(135, 155, 180)
+end)
+
+--//==================================================
+
+--// TAB HOVER
+
+--//==================================================
+
+SkinChangerTab.MouseEnter:Connect(function()
+
+if SkinPage.Visible then
+
+    SkinChangerTab.BackgroundColor3 = Color3.fromRGB(24, 52, 85)
+
+else
+
+    SkinChangerTab.BackgroundColor3 = Color3.fromRGB(18, 38, 62)
+
+end
+
+end)
+
+SkinChangerTab.MouseLeave:Connect(function()
+
+if SkinPage.Visible then
+
+    SkinChangerTab.BackgroundColor3 = Color3.fromRGB(18, 42, 70)
+
+else
+
+    SkinChangerTab.BackgroundColor3 = Color3.fromRGB(10, 25, 45)
+
+end
+
+end)
+
+SettingsTab.MouseEnter:Connect(function()
+
+if SettingsPage.Visible then
+
+    SettingsTab.BackgroundColor3 = Color3.fromRGB(24, 52, 85)
+
+else
+
+    SettingsTab.BackgroundColor3 = Color3.fromRGB(18, 38, 62)
+
+end
+
+end)
+
+SettingsTab.MouseLeave:Connect(function()
+
+if SettingsPage.Visible then
+
+    SettingsTab.BackgroundColor3 = Color3.fromRGB(18, 42, 70)
+
+else
+
+    SettingsTab.BackgroundColor3 = Color3.fromRGB(10, 25, 45)
+
+end
+
+end)
+
+--//==================================================
+
+--// AIMBOT TAB
+
+--//==================================================
+
+AimbotTab.MouseEnter:Connect(function()
+    if AimbotPage.Visible then
+        AimbotTab.BackgroundColor3 = Color3.fromRGB(24, 52, 85)
+    elseif not ChangelogOpen then
+        AimbotTab.BackgroundColor3 = Color3.fromRGB(18, 38, 62)
+    end
+end)
+
+AimbotTab.MouseLeave:Connect(function()
+    if AimbotPage.Visible then
+        AimbotTab.BackgroundColor3 = Color3.fromRGB(18, 42, 70)
+    else
+        AimbotTab.BackgroundColor3 = Color3.fromRGB(10, 25, 45)
+    end
+end)
+
+--//==================================================
+
+--// DRAGGING
+
+--//==================================================
+
+local Dragging = false
+
+local DragStart = nil
+
+local StartPosition = nil
+
+local DragInput = nil
+
+local function UpdateDrag(Input)
+
+local Delta = Input.Position - DragStart
+
+
+
+Main.Position = UDim2.new(
+
+    StartPosition.X.Scale,
+
+    StartPosition.X.Offset + Delta.X,
+
+    StartPosition.Y.Scale,
+
+    StartPosition.Y.Offset + Delta.Y
+
+)
+
+end
+
+DragBar.InputBegan:Connect(function(Input)
+
+if Input.UserInputType == Enum.UserInputType.MouseButton1
+
+    or Input.UserInputType == Enum.UserInputType.Touch then
+
+
+
+    Dragging = true
+
+    DragStart = Input.Position
+
+    StartPosition = Main.Position
+
+end
+
+end)
+
+DragBar.InputChanged:Connect(function(Input)
+
+if Input.UserInputType == Enum.UserInputType.MouseMovement
+
+    or Input.UserInputType == Enum.UserInputType.Touch then
+
+
+
+    DragInput = Input
+
+end
+
+end)
+
+UserInputService.InputChanged:Connect(function(Input)
+
+if Input == DragInput and Dragging then
+
+    UpdateDrag(Input)
+
+end
+
+end)
+
+UserInputService.InputEnded:Connect(function(Input)
+
+if Input.UserInputType == Enum.UserInputType.MouseButton1
+
+    or Input.UserInputType == Enum.UserInputType.Touch then
+
+
+
+    Dragging = false
+
+end
+
+end)
+
+--//==================================================
+
+--// DEVICE UI SCALING
+--// PC = 500x500
+--// MOBILE = 250x250
+
+--//==================================================
+
+local MainUIScale = Instance.new("UIScale")
+MainUIScale.Name = "DeviceScale"
+MainUIScale.Parent = Main
+
+if IsMobile then
+    -- Mobile: everything inside Main becomes 50% size
+    Main.Size = UDim2.new(0, 500, 0, 500)
+    MainUIScale.Scale = 0.5
+
+    -- Center the scaled 500x500 GUI
+    Main.Position = UDim2.new(0.5, -125, 0.5, -125)
+
+    print("Device: Mobile")
+    print("GUI Scale: 0.5x")
+    print("Effective GUI Size: 250x250")
+else
+    -- PC: unchanged
+    Main.Size = UDim2.new(0, 500, 0, 500)
+    MainUIScale.Scale = 1
+
+    Main.Position = UDim2.new(0.5, -250, 0.5, -250)
+
+    print("Device: PC")
+    print("GUI Scale: 1x")
+    print("GUI Size: 500x500")
+end
+
+--//==================================================
+
+--// PRINT STUFF
+
+--//==================================================
+
+print("TuffSkinChanger GUI loaded!")
+
+print("Auto Load:", AutoLoadEnabled and "ON" or "OFF")

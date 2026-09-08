@@ -1066,6 +1066,8 @@ EspKnobCorner.Parent = EspKnob
 --// ESP BODY PART SELECTOR
 --//==================================================
 
+local EspEnabled = false
+local ApplyESPToAll
 local EspPartMode = "All"
 
 local EspPartRow = Instance.new("Frame")
@@ -1197,21 +1199,10 @@ for Index, Name in ipairs(EspPartOptions) do
     CreateEspPartOption(Name, Index)
 end
 
-EspPartDropdown.MouseButton1Click:Connect(function()
-    local Opening = not EspPartList.Visible
-    EspPartList.Visible = Opening
-    if Opening then
-        EspPartList.Size = UDim2.new(0, 125, 0, 112)
-    else
-        EspPartList.Size = UDim2.new(0, 125, 0, 0)
-    end
-end)
-
 --//==================================================
 --// ESP STATE + TWEENS
 --//==================================================
 
-local EspEnabled = false
 
 local EspTweenInfo = TweenInfo.new(
     0.25,
@@ -1306,7 +1297,7 @@ end
 --// APPLY ESP TO EVERY PLAYER
 --//==================================================
 
-local function ApplyESPToAll()
+ApplyESPToAll = function()
     if not EspEnabled then
         return
     end
@@ -1402,18 +1393,20 @@ end)
 
 local AimbotEnabled = false
 local FOVCircleEnabled = false
-local FOVCircleSize = 100
+local FOVCircleSize = 50
+local AimbotTargetPart = "Head"
+local AimbotStrength = 50
 
-local function CreateToggleRow(Name, DisplayText, PositionY)
-    local Row = Instance.new("Frame")
-    Row.Name = Name .. "Row"
-    Row.Size = UDim2.new(1, 0, 0, 52)
-    Row.Position = UDim2.new(0, 0, 0, PositionY)
-    Row.BackgroundColor3 = Color3.fromRGB(10, 25, 45)
-    Row.BackgroundTransparency = 0.15
-    Row.BorderSizePixel = 0
-    Row.Parent = AimbotPage
+local EspDropdownOpen = false
+local AimbotDropdownOpen = false
 
+local AimbotRow
+local AimbotPartRow
+local CloseAimbotDropdown
+local FOVCircleRow
+local FOVSliderRow
+
+local function StyleCard(Row)
     local Corner = Instance.new("UICorner")
     Corner.CornerRadius = UDim.new(0, 12)
     Corner.Parent = Row
@@ -1423,6 +1416,17 @@ local function CreateToggleRow(Name, DisplayText, PositionY)
     Stroke.Transparency = 0.55
     Stroke.Thickness = 1
     Stroke.Parent = Row
+end
+
+local function CreateToggleRow(Name, DisplayText)
+    local Row = Instance.new("Frame")
+    Row.Name = Name .. "Row"
+    Row.Size = UDim2.new(1, 0, 0, 52)
+    Row.BackgroundColor3 = Color3.fromRGB(10, 25, 45)
+    Row.BackgroundTransparency = 0.15
+    Row.BorderSizePixel = 0
+    Row.Parent = AimbotPage
+    StyleCard(Row)
 
     local Text = Instance.new("TextLabel")
     Text.Name = Name .. "Text"
@@ -1513,38 +1517,189 @@ local function CreateToggleRow(Name, DisplayText, PositionY)
     return Row
 end
 
-CreateToggleRow("Aimbot", "Aimbot", 129)
-CreateToggleRow("FOVCircle", "FOV Circle", 191)
+local function CreateSelectorRow(Name, DisplayText, DefaultValue, Options, OnSelected)
+    local Row = Instance.new("Frame")
+    Row.Name = Name .. "Row"
+    Row.Size = UDim2.new(1, 0, 0, 52)
+    Row.BackgroundColor3 = Color3.fromRGB(10, 25, 45)
+    Row.BackgroundTransparency = 0.15
+    Row.BorderSizePixel = 0
+    Row.ZIndex = 30
+    Row.Parent = AimbotPage
+    StyleCard(Row)
+
+    local Label = Instance.new("TextLabel")
+    Label.Name = Name .. "Text"
+    Label.Size = UDim2.new(0.5, -16, 1, 0)
+    Label.Position = UDim2.new(0, 16, 0, 0)
+    Label.BackgroundTransparency = 1
+    Label.Text = DisplayText
+    Label.TextColor3 = Color3.fromRGB(220, 230, 245)
+    Label.TextSize = 14
+    Label.Font = Enum.Font.GothamMedium
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.ZIndex = 31
+    Label.Parent = Row
+
+    local Button = Instance.new("TextButton")
+    Button.Name = Name .. "Dropdown"
+    Button.Size = UDim2.new(0, 125, 0, 34)
+    Button.Position = UDim2.new(1, -137, 0.5, -17)
+    Button.BackgroundColor3 = Color3.fromRGB(18, 42, 70)
+    Button.BackgroundTransparency = 0.05
+    Button.BorderSizePixel = 0
+    Button.Text = DefaultValue
+    Button.TextColor3 = Color3.fromRGB(225, 235, 250)
+    Button.TextSize = 13
+    Button.Font = Enum.Font.GothamMedium
+    Button.AutoButtonColor = false
+    Button.ZIndex = 32
+    Button.Parent = Row
+
+    local ButtonCorner = Instance.new("UICorner")
+    ButtonCorner.CornerRadius = UDim.new(0, 10)
+    ButtonCorner.Parent = Button
+
+    local ButtonStroke = Instance.new("UIStroke")
+    ButtonStroke.Color = Color3.fromRGB(65, 105, 155)
+    ButtonStroke.Transparency = 0.2
+    ButtonStroke.Thickness = 1
+    ButtonStroke.Parent = Button
+
+    local List = Instance.new("Frame")
+    List.Name = Name .. "List"
+    List.Size = UDim2.new(0, 125, 0, 0)
+    List.Position = UDim2.new(1, -137, 1, 4)
+    List.BackgroundColor3 = Color3.fromRGB(10, 25, 45)
+    List.BackgroundTransparency = 0.02
+    List.BorderSizePixel = 0
+    List.Visible = false
+    List.ClipsDescendants = true
+    List.ZIndex = 40
+    List.Parent = Row
+
+    local ListCorner = Instance.new("UICorner")
+    ListCorner.CornerRadius = UDim.new(0, 10)
+    ListCorner.Parent = List
+
+    local ListStroke = Instance.new("UIStroke")
+    ListStroke.Color = Color3.fromRGB(65, 105, 155)
+    ListStroke.Transparency = 0.2
+    ListStroke.Thickness = 1
+    ListStroke.Parent = List
+
+    local OpenState = false
+    local function SetOpen(Value)
+        OpenState = Value
+        List.Visible = OpenState
+        List.Size = UDim2.new(0, 125, 0, OpenState and (#Options * 36 + 8) or 0)
+        if OnSelected("__OPEN_STATE__", OpenState) == false then
+            -- no-op; callback can ignore this signal
+        end
+    end
+
+    for Index, Option in ipairs(Options) do
+        local OptionButton = Instance.new("TextButton")
+        OptionButton.Name = Option .. "Option"
+        OptionButton.Size = UDim2.new(1, -8, 0, 36)
+        OptionButton.Position = UDim2.new(0, 4, 0, (Index - 1) * 36 + 4)
+        OptionButton.BackgroundColor3 = Color3.fromRGB(18, 42, 70)
+        OptionButton.BackgroundTransparency = 0.1
+        OptionButton.BorderSizePixel = 0
+        OptionButton.Text = Option
+        OptionButton.TextColor3 = Color3.fromRGB(220, 230, 245)
+        OptionButton.TextSize = 13
+        OptionButton.Font = Enum.Font.GothamMedium
+        OptionButton.AutoButtonColor = false
+        OptionButton.ZIndex = 41
+        OptionButton.Parent = List
+
+        local OptionCorner = Instance.new("UICorner")
+        OptionCorner.CornerRadius = UDim.new(0, 8)
+        OptionCorner.Parent = OptionButton
+
+        OptionButton.MouseEnter:Connect(function()
+            OptionButton.BackgroundColor3 = Color3.fromRGB(25, 52, 85)
+        end)
+
+        OptionButton.MouseLeave:Connect(function()
+            OptionButton.BackgroundColor3 = Color3.fromRGB(18, 42, 70)
+        end)
+
+        OptionButton.MouseButton1Click:Connect(function()
+            Button.Text = Option
+            OpenState = false
+            List.Visible = false
+            List.Size = UDim2.new(0, 125, 0, 0)
+            OnSelected(Option, false)
+        end)
+    end
+
+    Button.MouseButton1Click:Connect(function()
+        local NewState = not OpenState
+        if NewState and EspDropdownOpen then
+            EspDropdownOpen = false
+            EspPartList.Visible = false
+            EspPartList.Size = UDim2.new(0, 125, 0, 0)
+        end
+
+        if NewState then
+            OnSelected("__OPEN_STATE__", true)
+        else
+            OnSelected("__OPEN_STATE__", false)
+        end
+        OpenState = NewState
+        List.Visible = OpenState
+        List.Size = UDim2.new(0, 125, 0, OpenState and (#Options * 36 + 8) or 0)
+    end)
+
+    return Row, function()
+        OpenState = false
+        List.Visible = false
+        List.Size = UDim2.new(0, 125, 0, 0)
+        OnSelected("__OPEN_STATE__", false)
+    end
+end
+
+AimbotRow = CreateToggleRow("Aimbot", "Aimbot")
+
+-- Aimbot target-part selector: Head, Torso, Changing.
+AimbotPartRow, CloseAimbotDropdown = CreateSelectorRow(
+    "AimbotPart",
+    "Aimbot Body Part",
+    "Head",
+    {"Head", "Torso", "Changing"},
+    function(Value, IsOpen)
+        if Value == "Head" or Value == "Torso" or Value == "Changing" then
+            AimbotTargetPart = Value
+            AimbotDropdownOpen = false
+        elseif Value == "__OPEN_STATE__" then
+            AimbotDropdownOpen = IsOpen
+        end
+    end
+)
+
+FOVCircleRow = CreateToggleRow("FOVCircle", "FOV Circle")
 
 --//==================================================
 --// FOV CIRCLE SIZE SLIDER
 --//==================================================
 
-local FOVSliderRow = Instance.new("Frame")
+FOVSliderRow = Instance.new("Frame")
 FOVSliderRow.Name = "FOVCircleSliderRow"
 FOVSliderRow.Size = UDim2.new(1, 0, 0, 78)
-FOVSliderRow.Position = UDim2.new(0, 0, 0, 253)
 FOVSliderRow.BackgroundColor3 = Color3.fromRGB(10, 25, 45)
 FOVSliderRow.BackgroundTransparency = 0.15
 FOVSliderRow.BorderSizePixel = 0
 FOVSliderRow.Parent = AimbotPage
-
-local FOVSliderCorner = Instance.new("UICorner")
-FOVSliderCorner.CornerRadius = UDim.new(0, 12)
-FOVSliderCorner.Parent = FOVSliderRow
-
-local FOVSliderStroke = Instance.new("UIStroke")
-FOVSliderStroke.Color = Color3.fromRGB(55, 100, 155)
-FOVSliderStroke.Transparency = 0.55
-FOVSliderStroke.Thickness = 1
-FOVSliderStroke.Parent = FOVSliderRow
+StyleCard(FOVSliderRow)
 
 local FOVSliderLabel = Instance.new("TextLabel")
 FOVSliderLabel.Name = "FOVCircleSliderLabel"
 FOVSliderLabel.Size = UDim2.new(1, -32, 0, 25)
 FOVSliderLabel.Position = UDim2.new(0, 16, 0, 7)
 FOVSliderLabel.BackgroundTransparency = 1
-FOVSliderLabel.Text = "FOV Circle Size: 100"
+FOVSliderLabel.Text = "FOV Circle Size: 50"
 FOVSliderLabel.TextColor3 = Color3.fromRGB(220, 230, 245)
 FOVSliderLabel.TextSize = 14
 FOVSliderLabel.Font = Enum.Font.GothamMedium
@@ -1614,15 +1769,6 @@ FOVSlider.InputBegan:Connect(function(Input)
     end
 end)
 
-FOVSlider.InputChanged:Connect(function(Input)
-    if Input.UserInputType == Enum.UserInputType.MouseMovement
-        or Input.UserInputType == Enum.UserInputType.Touch then
-        if FOVDragging then
-            UpdateFOVSlider(Input)
-        end
-    end
-end)
-
 UserInputService.InputChanged:Connect(function(Input)
     if FOVDragging and (
         Input.UserInputType == Enum.UserInputType.MouseMovement
@@ -1638,6 +1784,175 @@ UserInputService.InputEnded:Connect(function(Input)
         FOVDragging = false
     end
 end)
+
+--//==================================================
+--// AIMBOT STRENGTH SLIDER
+--//==================================================
+
+local StrengthSliderRow = Instance.new("Frame")
+StrengthSliderRow.Name = "AimbotStrengthSliderRow"
+StrengthSliderRow.Size = UDim2.new(1, 0, 0, 78)
+StrengthSliderRow.BackgroundColor3 = Color3.fromRGB(10, 25, 45)
+StrengthSliderRow.BackgroundTransparency = 0.15
+StrengthSliderRow.BorderSizePixel = 0
+StrengthSliderRow.Parent = AimbotPage
+StyleCard(StrengthSliderRow)
+
+local StrengthSliderLabel = Instance.new("TextLabel")
+StrengthSliderLabel.Name = "AimbotStrengthSliderLabel"
+StrengthSliderLabel.Size = UDim2.new(1, -32, 0, 25)
+StrengthSliderLabel.Position = UDim2.new(0, 16, 0, 7)
+StrengthSliderLabel.BackgroundTransparency = 1
+StrengthSliderLabel.Text = "Aimbot Strength: 50"
+StrengthSliderLabel.TextColor3 = Color3.fromRGB(220, 230, 245)
+StrengthSliderLabel.TextSize = 14
+StrengthSliderLabel.Font = Enum.Font.GothamMedium
+StrengthSliderLabel.TextXAlignment = Enum.TextXAlignment.Left
+StrengthSliderLabel.Parent = StrengthSliderRow
+
+local StrengthSlider = Instance.new("TextButton")
+StrengthSlider.Name = "AimbotStrengthSlider"
+StrengthSlider.Size = UDim2.new(1, -32, 0, 12)
+StrengthSlider.Position = UDim2.new(0, 16, 0, 46)
+StrengthSlider.BackgroundColor3 = Color3.fromRGB(35, 50, 68)
+StrengthSlider.BorderSizePixel = 0
+StrengthSlider.Text = ""
+StrengthSlider.AutoButtonColor = false
+StrengthSlider.Active = true
+StrengthSlider.Parent = StrengthSliderRow
+
+local StrengthSliderCorner = Instance.new("UICorner")
+StrengthSliderCorner.CornerRadius = UDim.new(1, 0)
+StrengthSliderCorner.Parent = StrengthSlider
+
+local StrengthSliderFill = Instance.new("Frame")
+StrengthSliderFill.Name = "Fill"
+StrengthSliderFill.Size = UDim2.new(0.5, 0, 1, 0)
+StrengthSliderFill.BackgroundColor3 = Color3.fromRGB(65, 105, 155)
+StrengthSliderFill.BorderSizePixel = 0
+StrengthSliderFill.Parent = StrengthSlider
+
+local StrengthSliderFillCorner = Instance.new("UICorner")
+StrengthSliderFillCorner.CornerRadius = UDim.new(1, 0)
+StrengthSliderFillCorner.Parent = StrengthSliderFill
+
+local StrengthSliderKnob = Instance.new("Frame")
+StrengthSliderKnob.Name = "Knob"
+StrengthSliderKnob.Size = UDim2.new(0, 18, 0, 18)
+StrengthSliderKnob.AnchorPoint = Vector2.new(0.5, 0.5)
+StrengthSliderKnob.Position = UDim2.new(0.5, 0, 0.5, 0)
+StrengthSliderKnob.BackgroundColor3 = Color3.fromRGB(225, 235, 250)
+StrengthSliderKnob.BorderSizePixel = 0
+StrengthSliderKnob.Parent = StrengthSlider
+
+local StrengthSliderKnobCorner = Instance.new("UICorner")
+StrengthSliderKnobCorner.CornerRadius = UDim.new(1, 0)
+StrengthSliderKnobCorner.Parent = StrengthSliderKnob
+
+local StrengthDragging = false
+local StrengthMinimum = 0
+local StrengthMaximum = 100
+
+local function UpdateStrengthSlider(Input)
+    local X = Input.Position.X
+    local StartX = StrengthSlider.AbsolutePosition.X
+    local Width = StrengthSlider.AbsoluteSize.X
+    local Percent = math.clamp((X - StartX) / Width, 0, 1)
+
+    AimbotStrength = math.floor(StrengthMinimum + ((StrengthMaximum - StrengthMinimum) * Percent) + 0.5)
+    StrengthSliderFill.Size = UDim2.new(Percent, 0, 1, 0)
+    StrengthSliderKnob.Position = UDim2.new(Percent, 0, 0.5, 0)
+    StrengthSliderLabel.Text = "Aimbot Strength: " .. tostring(AimbotStrength)
+end
+
+StrengthSlider.InputBegan:Connect(function(Input)
+    if Input.UserInputType == Enum.UserInputType.MouseButton1
+        or Input.UserInputType == Enum.UserInputType.Touch then
+        StrengthDragging = true
+        UpdateStrengthSlider(Input)
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(Input)
+    if StrengthDragging and (
+        Input.UserInputType == Enum.UserInputType.MouseMovement
+        or Input.UserInputType == Enum.UserInputType.Touch
+    ) then
+        UpdateStrengthSlider(Input)
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(Input)
+    if Input.UserInputType == Enum.UserInputType.MouseButton1
+        or Input.UserInputType == Enum.UserInputType.Touch then
+        StrengthDragging = false
+    end
+end)
+
+--//==================================================
+--// DYNAMIC AIMBOT PAGE LAYOUT
+--// Dropdowns push everything below them down so nothing overlaps.
+--//==================================================
+
+local function UpdateAimbotLayout()
+    local EspY = 5
+    local EspPartY = 67
+    local ExtraEsp = EspDropdownOpen and 60 or 0
+
+    EspRow.Position = UDim2.new(0, 0, 0, EspY)
+    EspPartRow.Position = UDim2.new(0, 0, 0, EspPartY)
+
+    local AimbotY = 129 + ExtraEsp
+    local AimbotPartY = AimbotY + 62
+    local ExtraAimbot = AimbotDropdownOpen and 60 or 0
+    local FOVY = AimbotPartY + 62 + ExtraAimbot
+    local FOVSliderY = FOVY + 88
+    local StrengthY = FOVSliderY + 88
+
+    AimbotRow.Position = UDim2.new(0, 0, 0, AimbotY)
+    AimbotPartRow.Position = UDim2.new(0, 0, 0, AimbotPartY)
+    FOVCircleRow.Position = UDim2.new(0, 0, 0, FOVY)
+    FOVSliderRow.Position = UDim2.new(0, 0, 0, FOVSliderY)
+    StrengthSliderRow.Position = UDim2.new(0, 0, 0, StrengthY)
+end
+
+-- Replace the ESP selector's simple open/close connection with dynamic layout behavior.
+EspPartDropdown.MouseButton1Click:Connect(function()
+    EspDropdownOpen = not EspDropdownOpen
+
+    if EspDropdownOpen and CloseAimbotDropdown then
+        CloseAimbotDropdown()
+    end
+
+    EspPartList.Visible = EspDropdownOpen
+    EspPartList.Size = UDim2.new(0, 125, 0, EspDropdownOpen and 116 or 0)
+    UpdateAimbotLayout()
+end)
+
+-- Existing ESP option buttons need to close the dropdown and restore the layout.
+for _, Button in pairs(EspPartButtons) do
+    Button.MouseButton1Click:Connect(function()
+        EspDropdownOpen = false
+        EspPartList.Visible = false
+        EspPartList.Size = UDim2.new(0, 125, 0, 0)
+        UpdateAimbotLayout()
+    end)
+end
+
+-- The Aimbot selector callback updates this flag through the existing selector callback.
+-- Watch for its current state and apply the layout after interactions.
+local PreviousAimbotDropdownOpen = AimbotDropdownOpen
+local LayoutConnection = task.spawn(function()
+    while AimbotPage.Parent do
+        if PreviousAimbotDropdownOpen ~= AimbotDropdownOpen then
+            PreviousAimbotDropdownOpen = AimbotDropdownOpen
+            UpdateAimbotLayout()
+        end
+        task.wait()
+    end
+end)
+
+UpdateAimbotLayout()
 
 --//==================================================
 --// EXISTING PLAYERS
@@ -2094,7 +2409,7 @@ end)
 --// Edit ONLY the text below to update the changelog.
 --//==================================================
 
-local ChangelogVersion = "V1.0.7"
+local ChangelogVersion = "V1.0.8"
 
 local ChangelogText = [[
 • Added Changelog tab.

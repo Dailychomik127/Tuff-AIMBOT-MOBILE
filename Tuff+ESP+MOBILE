@@ -712,7 +712,7 @@ local Content = Instance.new("Frame")
 
 Content.Name = "Content"
 
-Content.Size = UDim2.new(1, -30, 1, -168)
+Content.Size = UDim2.new(1, -30, 1, -135)
 
 Content.Position = UDim2.new(0, 15, 0, 130)
 
@@ -1063,219 +1063,145 @@ EspKnobCorner.CornerRadius = UDim.new(1, 0)
 EspKnobCorner.Parent = EspKnob
 
 --//==================================================
---// GENERIC FULL-ROW DROPDOWN
---//==================================================
-
-local DropdownTweenInfo = TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
-
-local function CreateFullRowDropdown(Page, Name, DisplayText, DefaultValue, Options, OnSelected, OnOpenChanged)
-    local Row = Instance.new("Frame")
-    Row.Name = Name .. "Row"
-    Row.Size = UDim2.new(1, 0, 0, 52)
-    Row.BackgroundColor3 = Color3.fromRGB(10, 25, 45)
-    Row.BackgroundTransparency = 0.15
-    Row.BorderSizePixel = 0
-    Row.ZIndex = 30
-    Row.ClipsDescendants = false
-    Row.Parent = Page
-    StyleCard(Row)
-
-    local Label = Instance.new("TextLabel")
-    Label.Name = Name .. "Text"
-    Label.Size = UDim2.new(0.55, -16, 1, 0)
-    Label.Position = UDim2.new(0, 16, 0, 0)
-    Label.BackgroundTransparency = 1
-    Label.Text = DisplayText
-    Label.TextColor3 = Color3.fromRGB(220, 230, 245)
-    Label.TextSize = 14
-    Label.Font = Enum.Font.GothamMedium
-    Label.TextXAlignment = Enum.TextXAlignment.Left
-    Label.ZIndex = 31
-    Label.Parent = Row
-
-    local Current = Instance.new("TextLabel")
-    Current.Name = Name .. "Current"
-    Current.Size = UDim2.new(0.45, -28, 1, 0)
-    Current.Position = UDim2.new(0.55, 0, 0, 0)
-    Current.BackgroundTransparency = 1
-    Current.Text = DefaultValue
-    Current.TextColor3 = Color3.fromRGB(225, 235, 250)
-    Current.TextSize = 13
-    Current.Font = Enum.Font.GothamMedium
-    Current.TextXAlignment = Enum.TextXAlignment.Right
-    Current.ZIndex = 31
-    Current.Parent = Row
-
-    local HitButton = Instance.new("TextButton")
-    HitButton.Name = Name .. "Hitbox"
-    HitButton.Size = UDim2.new(1, 0, 1, 0)
-    HitButton.Position = UDim2.new(0, 0, 0, 0)
-    HitButton.BackgroundTransparency = 1
-    HitButton.BorderSizePixel = 0
-    HitButton.Text = ""
-    HitButton.AutoButtonColor = false
-    HitButton.ZIndex = 29
-    HitButton.Parent = Row
-
-    local List = Instance.new("ScrollingFrame")
-    List.Name = Name .. "Options"
-    List.Size = UDim2.new(1, 0, 0, 0)
-    List.Position = UDim2.new(0, 0, 1, 4)
-    List.BackgroundColor3 = Color3.fromRGB(10, 25, 45)
-    List.BackgroundTransparency = 0.02
-    List.BorderSizePixel = 0
-    List.Visible = false
-    List.ClipsDescendants = true
-    List.ZIndex = 60
-    List.Parent = Row
-    local ListCorner = Instance.new("UICorner")
-    ListCorner.CornerRadius = UDim.new(0, 12)
-    ListCorner.Parent = List
-    local ListStroke = Instance.new("UIStroke")
-    ListStroke.Color = Color3.fromRGB(65, 105, 155)
-    ListStroke.Transparency = 0.2
-    ListStroke.Thickness = 1
-    ListStroke.Parent = List
-
-    local OptionButtons = {}
-    local Open = false
-    local MaxVisible = math.min(#Options, 3)
-    local ButtonHeight = 52
-    local Gap = 4
-    local TargetHeight = MaxVisible * ButtonHeight + (MaxVisible - 1) * Gap + 8
-    List.CanvasSize = UDim2.new(0, 0, 0, #Options * ButtonHeight + math.max(0, #Options - 1) * Gap + 8)
-    List.ScrollingDirection = Enum.ScrollingDirection.Y
-    List.ScrollingEnabled = #Options > 3
-    List.ScrollBarThickness = #Options > 3 and 4 or 0
-    List.ScrollBarImageTransparency = 0.25
-    List.ScrollBarImageColor3 = Color3.fromRGB(80, 120, 170)
-
-    local function RefreshSelectedColors()
-        for option, button in pairs(OptionButtons) do
-            if option == Current.Text then
-                button.BackgroundColor3 = Color3.fromRGB(45, 140, 75)
-                button.TextColor3 = Color3.fromRGB(255, 255, 255)
-            else
-                button.BackgroundColor3 = Color3.fromRGB(18, 42, 70)
-                button.TextColor3 = Color3.fromRGB(220, 230, 245)
-            end
-        end
-    end
-
-    local function SetOpen(Value, Animated)
-        if Open == Value then return end
-        Open = Value
-        if OnOpenChanged then OnOpenChanged(Open) end
-
-        if Open then
-            List.Visible = true
-            local goal = {Size = UDim2.new(1, 0, 0, TargetHeight)}
-            if Animated then
-                List.Size = UDim2.new(1, 0, 0, 0)
-                TweenService:Create(List, DropdownTweenInfo, goal):Play()
-            else
-                List.Size = goal.Size
-            end
-        else
-            local goal = {Size = UDim2.new(1, 0, 0, 0)}
-            if Animated then
-                local tween = TweenService:Create(List, DropdownTweenInfo, goal)
-                tween:Play()
-                task.delay(DropdownTweenInfo.Time, function()
-                    if not Open then List.Visible = false end
-                end)
-            else
-                List.Size = goal.Size
-                List.Visible = false
-            end
-        end
-    end
-
-    for index, option in ipairs(Options) do
-        local button = Instance.new("TextButton")
-        button.Name = option .. "Option"
-        button.Size = UDim2.new(1, -8, 0, ButtonHeight)
-        button.Position = UDim2.new(0, 4, 0, 4 + (index - 1) * (ButtonHeight + Gap))
-        button.BackgroundColor3 = Color3.fromRGB(18, 42, 70)
-        button.BackgroundTransparency = 0.05
-        button.BorderSizePixel = 0
-        button.Text = option
-        button.TextColor3 = Color3.fromRGB(220, 230, 245)
-        button.TextSize = 14
-        button.Font = Enum.Font.GothamMedium
-        button.TextXAlignment = Enum.TextXAlignment.Right
-        button.AutoButtonColor = false
-        button.ZIndex = 61
-        button.Parent = List
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 12)
-        corner.Parent = button
-
-        button.MouseEnter:Connect(function()
-            if Current.Text ~= option then button.BackgroundColor3 = Color3.fromRGB(25, 52, 85) end
-        end)
-        button.MouseLeave:Connect(function()
-            RefreshSelectedColors()
-        end)
-        button.MouseButton1Click:Connect(function()
-            Current.Text = option
-            RefreshSelectedColors()
-            OnSelected(option)
-            SetOpen(false, true)
-        end)
-        OptionButtons[option] = button
-    end
-
-    RefreshSelectedColors()
-
-    HitButton.MouseEnter:Connect(function()
-        if not Open then Row.BackgroundColor3 = Color3.fromRGB(13, 31, 52) end
-    end)
-    HitButton.MouseLeave:Connect(function()
-        Row.BackgroundColor3 = Color3.fromRGB(10, 25, 45)
-    end)
-    HitButton.MouseButton1Click:Connect(function()
-        SetOpen(not Open, true)
-    end)
-
-    return Row, function()
-        SetOpen(false, true)
-    end, function()
-        return Open
-    end
-end
-
---//==================================================
 --// ESP BODY PART SELECTOR
 --//==================================================
 
 local EspEnabled = false
 local ApplyESPToAll
 local EspPartMode = "All"
-local EspDropdownOpen = false
-local CloseAimbotDropdown
 
-local EspPartRow, CloseEspDropdown, IsEspDropdownOpen = CreateFullRowDropdown(
-    AimbotPage,
-    "EspPart",
-    "ESP Body Part",
-    "All",
-    {"All", "Head", "Torso"},
-    function(Value)
-        EspPartMode = Value
-        if EspEnabled then ApplyESPToAll() end
-    end,
-    function(IsOpen)
-        EspDropdownOpen = IsOpen
-        if IsOpen and CloseAimbotDropdown then CloseAimbotDropdown() end
-    end
-)
+local EspPartRow = Instance.new("Frame")
+EspPartRow.Name = "EspPartRow"
+EspPartRow.Size = UDim2.new(1, 0, 0, 52)
+EspPartRow.Position = UDim2.new(0, 0, 0, 67)
+EspPartRow.BackgroundColor3 = Color3.fromRGB(10, 25, 45)
+EspPartRow.BackgroundTransparency = 0.15
+EspPartRow.BorderSizePixel = 0
+EspPartRow.ZIndex = 30
+EspPartRow.Parent = AimbotPage
+
+local EspPartRowCorner = Instance.new("UICorner")
+EspPartRowCorner.CornerRadius = UDim.new(0, 12)
+EspPartRowCorner.Parent = EspPartRow
+
+local EspPartRowStroke = Instance.new("UIStroke")
+EspPartRowStroke.Color = Color3.fromRGB(55, 100, 155)
+EspPartRowStroke.Transparency = 0.55
+EspPartRowStroke.Thickness = 1
+EspPartRowStroke.Parent = EspPartRow
+
+local EspPartText = Instance.new("TextLabel")
+EspPartText.Name = "EspPartText"
+EspPartText.Size = UDim2.new(0.5, -16, 1, 0)
+EspPartText.Position = UDim2.new(0, 16, 0, 0)
+EspPartText.BackgroundTransparency = 1
+EspPartText.Text = "ESP Body Part"
+EspPartText.TextColor3 = Color3.fromRGB(220, 230, 245)
+EspPartText.TextSize = 14
+EspPartText.Font = Enum.Font.GothamMedium
+EspPartText.TextXAlignment = Enum.TextXAlignment.Left
+EspPartText.ZIndex = 31
+EspPartText.Parent = EspPartRow
+
+local EspPartDropdown = Instance.new("TextButton")
+EspPartDropdown.Name = "EspPartDropdown"
+EspPartDropdown.Size = UDim2.new(0, 125, 0, 34)
+EspPartDropdown.Position = UDim2.new(1, -137, 0.5, -17)
+EspPartDropdown.BackgroundColor3 = Color3.fromRGB(18, 42, 70)
+EspPartDropdown.BackgroundTransparency = 0.05
+EspPartDropdown.BorderSizePixel = 0
+EspPartDropdown.Text = "All"
+EspPartDropdown.TextColor3 = Color3.fromRGB(225, 235, 250)
+EspPartDropdown.TextSize = 13
+EspPartDropdown.Font = Enum.Font.GothamMedium
+EspPartDropdown.AutoButtonColor = false
+EspPartDropdown.ZIndex = 32
+EspPartDropdown.Parent = EspPartRow
+
+local EspPartDropdownCorner = Instance.new("UICorner")
+EspPartDropdownCorner.CornerRadius = UDim.new(0, 10)
+EspPartDropdownCorner.Parent = EspPartDropdown
+
+local EspPartDropdownStroke = Instance.new("UIStroke")
+EspPartDropdownStroke.Color = Color3.fromRGB(65, 105, 155)
+EspPartDropdownStroke.Transparency = 0.2
+EspPartDropdownStroke.Thickness = 1
+EspPartDropdownStroke.Parent = EspPartDropdown
+
+local EspPartList = Instance.new("Frame")
+EspPartList.Name = "EspPartList"
+EspPartList.Size = UDim2.new(0, 125, 0, 0)
+EspPartList.Position = UDim2.new(1, -137, 1, 4)
+EspPartList.BackgroundColor3 = Color3.fromRGB(10, 25, 45)
+EspPartList.BackgroundTransparency = 0.02
+EspPartList.BorderSizePixel = 0
+EspPartList.Visible = false
+EspPartList.ClipsDescendants = true
+EspPartList.ZIndex = 40
+EspPartList.Parent = EspPartRow
+
+local EspPartListCorner = Instance.new("UICorner")
+EspPartListCorner.CornerRadius = UDim.new(0, 10)
+EspPartListCorner.Parent = EspPartList
+
+local EspPartListStroke = Instance.new("UIStroke")
+EspPartListStroke.Color = Color3.fromRGB(65, 105, 155)
+EspPartListStroke.Transparency = 0.2
+EspPartListStroke.Thickness = 1
+EspPartListStroke.Parent = EspPartList
+
+local EspPartOptions = {"All", "Head", "Torso"}
+local EspPartButtons = {}
+
+local function CreateEspPartOption(Name, Index)
+    local Button = Instance.new("TextButton")
+    Button.Name = Name .. "Option"
+    Button.Size = UDim2.new(1, -8, 0, 36)
+    Button.Position = UDim2.new(0, 4, 0, (Index - 1) * 36 + 4)
+    Button.BackgroundColor3 = Color3.fromRGB(18, 42, 70)
+    Button.BackgroundTransparency = 0.1
+    Button.BorderSizePixel = 0
+    Button.Text = Name
+    Button.TextColor3 = Color3.fromRGB(220, 230, 245)
+    Button.TextSize = 13
+    Button.Font = Enum.Font.GothamMedium
+    Button.AutoButtonColor = false
+    Button.ZIndex = 41
+    Button.Parent = EspPartList
+
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 8)
+    Corner.Parent = Button
+
+    Button.MouseEnter:Connect(function()
+        Button.BackgroundColor3 = Color3.fromRGB(25, 52, 85)
+    end)
+
+    Button.MouseLeave:Connect(function()
+        Button.BackgroundColor3 = Color3.fromRGB(18, 42, 70)
+    end)
+
+    Button.MouseButton1Click:Connect(function()
+        EspPartMode = Name
+        EspPartDropdown.Text = Name
+        EspPartList.Visible = false
+        EspPartList.Size = UDim2.new(0, 125, 0, 0)
+
+        if EspEnabled then
+            ApplyESPToAll()
+        end
+    end)
+
+    EspPartButtons[Name] = Button
+end
+
+for Index, Name in ipairs(EspPartOptions) do
+    CreateEspPartOption(Name, Index)
+end
 
 --//==================================================
 --// ESP STATE + TWEENS
 --//==================================================
-
-
 
 
 local EspTweenInfo = TweenInfo.new(
@@ -1471,10 +1397,12 @@ local FOVCircleSize = 50
 local AimbotTargetPart = "Head"
 local AimbotStrength = 50
 
+local EspDropdownOpen = false
 local AimbotDropdownOpen = false
 
 local AimbotRow
 local AimbotPartRow
+local CloseAimbotDropdown
 local FOVCircleRow
 local FOVSliderRow
 
@@ -1589,22 +1517,164 @@ local function CreateToggleRow(Name, DisplayText)
     return Row
 end
 
+local function CreateSelectorRow(Name, DisplayText, DefaultValue, Options, OnSelected)
+    local Row = Instance.new("Frame")
+    Row.Name = Name .. "Row"
+    Row.Size = UDim2.new(1, 0, 0, 52)
+    Row.BackgroundColor3 = Color3.fromRGB(10, 25, 45)
+    Row.BackgroundTransparency = 0.15
+    Row.BorderSizePixel = 0
+    Row.ZIndex = 30
+    Row.Parent = AimbotPage
+    StyleCard(Row)
+
+    local Label = Instance.new("TextLabel")
+    Label.Name = Name .. "Text"
+    Label.Size = UDim2.new(0.5, -16, 1, 0)
+    Label.Position = UDim2.new(0, 16, 0, 0)
+    Label.BackgroundTransparency = 1
+    Label.Text = DisplayText
+    Label.TextColor3 = Color3.fromRGB(220, 230, 245)
+    Label.TextSize = 14
+    Label.Font = Enum.Font.GothamMedium
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.ZIndex = 31
+    Label.Parent = Row
+
+    local Button = Instance.new("TextButton")
+    Button.Name = Name .. "Dropdown"
+    Button.Size = UDim2.new(0, 125, 0, 34)
+    Button.Position = UDim2.new(1, -137, 0.5, -17)
+    Button.BackgroundColor3 = Color3.fromRGB(18, 42, 70)
+    Button.BackgroundTransparency = 0.05
+    Button.BorderSizePixel = 0
+    Button.Text = DefaultValue
+    Button.TextColor3 = Color3.fromRGB(225, 235, 250)
+    Button.TextSize = 13
+    Button.Font = Enum.Font.GothamMedium
+    Button.AutoButtonColor = false
+    Button.ZIndex = 32
+    Button.Parent = Row
+
+    local ButtonCorner = Instance.new("UICorner")
+    ButtonCorner.CornerRadius = UDim.new(0, 10)
+    ButtonCorner.Parent = Button
+
+    local ButtonStroke = Instance.new("UIStroke")
+    ButtonStroke.Color = Color3.fromRGB(65, 105, 155)
+    ButtonStroke.Transparency = 0.2
+    ButtonStroke.Thickness = 1
+    ButtonStroke.Parent = Button
+
+    local List = Instance.new("Frame")
+    List.Name = Name .. "List"
+    List.Size = UDim2.new(0, 125, 0, 0)
+    List.Position = UDim2.new(1, -137, 1, 4)
+    List.BackgroundColor3 = Color3.fromRGB(10, 25, 45)
+    List.BackgroundTransparency = 0.02
+    List.BorderSizePixel = 0
+    List.Visible = false
+    List.ClipsDescendants = true
+    List.ZIndex = 40
+    List.Parent = Row
+
+    local ListCorner = Instance.new("UICorner")
+    ListCorner.CornerRadius = UDim.new(0, 10)
+    ListCorner.Parent = List
+
+    local ListStroke = Instance.new("UIStroke")
+    ListStroke.Color = Color3.fromRGB(65, 105, 155)
+    ListStroke.Transparency = 0.2
+    ListStroke.Thickness = 1
+    ListStroke.Parent = List
+
+    local OpenState = false
+    local function SetOpen(Value)
+        OpenState = Value
+        List.Visible = OpenState
+        List.Size = UDim2.new(0, 125, 0, OpenState and (#Options * 36 + 8) or 0)
+        if OnSelected("__OPEN_STATE__", OpenState) == false then
+            -- no-op; callback can ignore this signal
+        end
+    end
+
+    for Index, Option in ipairs(Options) do
+        local OptionButton = Instance.new("TextButton")
+        OptionButton.Name = Option .. "Option"
+        OptionButton.Size = UDim2.new(1, -8, 0, 36)
+        OptionButton.Position = UDim2.new(0, 4, 0, (Index - 1) * 36 + 4)
+        OptionButton.BackgroundColor3 = Color3.fromRGB(18, 42, 70)
+        OptionButton.BackgroundTransparency = 0.1
+        OptionButton.BorderSizePixel = 0
+        OptionButton.Text = Option
+        OptionButton.TextColor3 = Color3.fromRGB(220, 230, 245)
+        OptionButton.TextSize = 13
+        OptionButton.Font = Enum.Font.GothamMedium
+        OptionButton.AutoButtonColor = false
+        OptionButton.ZIndex = 41
+        OptionButton.Parent = List
+
+        local OptionCorner = Instance.new("UICorner")
+        OptionCorner.CornerRadius = UDim.new(0, 8)
+        OptionCorner.Parent = OptionButton
+
+        OptionButton.MouseEnter:Connect(function()
+            OptionButton.BackgroundColor3 = Color3.fromRGB(25, 52, 85)
+        end)
+
+        OptionButton.MouseLeave:Connect(function()
+            OptionButton.BackgroundColor3 = Color3.fromRGB(18, 42, 70)
+        end)
+
+        OptionButton.MouseButton1Click:Connect(function()
+            Button.Text = Option
+            OpenState = false
+            List.Visible = false
+            List.Size = UDim2.new(0, 125, 0, 0)
+            OnSelected(Option, false)
+        end)
+    end
+
+    Button.MouseButton1Click:Connect(function()
+        local NewState = not OpenState
+        if NewState and EspDropdownOpen then
+            EspDropdownOpen = false
+            EspPartList.Visible = false
+            EspPartList.Size = UDim2.new(0, 125, 0, 0)
+        end
+
+        if NewState then
+            OnSelected("__OPEN_STATE__", true)
+        else
+            OnSelected("__OPEN_STATE__", false)
+        end
+        OpenState = NewState
+        List.Visible = OpenState
+        List.Size = UDim2.new(0, 125, 0, OpenState and (#Options * 36 + 8) or 0)
+    end)
+
+    return Row, function()
+        OpenState = false
+        List.Visible = false
+        List.Size = UDim2.new(0, 125, 0, 0)
+        OnSelected("__OPEN_STATE__", false)
+    end
+end
+
 AimbotRow = CreateToggleRow("Aimbot", "Aimbot")
 
-AimbotPartRow, CloseAimbotDropdown, IsAimbotDropdownOpen = CreateFullRowDropdown(
-    AimbotPage,
+-- Aimbot target-part selector: Head, Torso, Changing.
+AimbotPartRow, CloseAimbotDropdown = CreateSelectorRow(
     "AimbotPart",
     "Aimbot Body Part",
     "Head",
     {"Head", "Torso", "Changing"},
-    function(Value)
-        AimbotTargetPart = Value
-    end,
-    function(IsOpen)
-        AimbotDropdownOpen = IsOpen
-        if IsOpen then
-            EspDropdownOpen = false
-            CloseEspDropdown()
+    function(Value, IsOpen)
+        if Value == "Head" or Value == "Torso" or Value == "Changing" then
+            AimbotTargetPart = Value
+            AimbotDropdownOpen = false
+        elseif Value == "__OPEN_STATE__" then
+            AimbotDropdownOpen = IsOpen
         end
     end
 )
@@ -1821,61 +1891,68 @@ end)
 
 --//==================================================
 --// DYNAMIC AIMBOT PAGE LAYOUT
---// Dropdowns smoothly push everything below them down.
+--// Dropdowns push everything below them down so nothing overlaps.
 --//==================================================
 
-local function UpdateAimbotLayout(Animated)
+local function UpdateAimbotLayout()
     local EspY = 5
     local EspPartY = 67
     local ExtraEsp = EspDropdownOpen and 60 or 0
 
+    EspRow.Position = UDim2.new(0, 0, 0, EspY)
+    EspPartRow.Position = UDim2.new(0, 0, 0, EspPartY)
+
     local AimbotY = 129 + ExtraEsp
     local AimbotPartY = AimbotY + 62
     local ExtraAimbot = AimbotDropdownOpen and 60 or 0
-    local StrengthY = AimbotPartY + 62 + ExtraAimbot
-    local FOVY = StrengthY + 88
-    local FOVSliderY = FOVY + 62
+    local FOVY = AimbotPartY + 62 + ExtraAimbot
+    local FOVSliderY = FOVY + 88
+    local StrengthY = FOVSliderY + 88
 
-    local positions = {
-        {EspRow, EspY},
-        {EspPartRow, EspPartY},
-        {AimbotRow, AimbotY},
-        {AimbotPartRow, AimbotPartY},
-        {StrengthSliderRow, StrengthY},
-        {FOVCircleRow, FOVY},
-        {FOVSliderRow, FOVSliderY},
-    }
-
-    for _, item in ipairs(positions) do
-        local object, y = item[1], item[2]
-        local goal = {Position = UDim2.new(0, 0, 0, y)}
-        if Animated then
-            TweenService:Create(object, DropdownTweenInfo, goal):Play()
-        else
-            object.Position = goal.Position
-        end
-    end
+    AimbotRow.Position = UDim2.new(0, 0, 0, AimbotY)
+    AimbotPartRow.Position = UDim2.new(0, 0, 0, AimbotPartY)
+    FOVCircleRow.Position = UDim2.new(0, 0, 0, FOVY)
+    FOVSliderRow.Position = UDim2.new(0, 0, 0, FOVSliderY)
+    StrengthSliderRow.Position = UDim2.new(0, 0, 0, StrengthY)
 end
 
--- Keep the full-row dropdown behavior consistent with every selector.
-local LastEspState = false
-local LastAimbotState = false
-local LayoutWatcher = task.spawn(function()
+-- Replace the ESP selector's simple open/close connection with dynamic layout behavior.
+EspPartDropdown.MouseButton1Click:Connect(function()
+    EspDropdownOpen = not EspDropdownOpen
+
+    if EspDropdownOpen and CloseAimbotDropdown then
+        CloseAimbotDropdown()
+    end
+
+    EspPartList.Visible = EspDropdownOpen
+    EspPartList.Size = UDim2.new(0, 125, 0, EspDropdownOpen and 116 or 0)
+    UpdateAimbotLayout()
+end)
+
+-- Existing ESP option buttons need to close the dropdown and restore the layout.
+for _, Button in pairs(EspPartButtons) do
+    Button.MouseButton1Click:Connect(function()
+        EspDropdownOpen = false
+        EspPartList.Visible = false
+        EspPartList.Size = UDim2.new(0, 125, 0, 0)
+        UpdateAimbotLayout()
+    end)
+end
+
+-- The Aimbot selector callback updates this flag through the existing selector callback.
+-- Watch for its current state and apply the layout after interactions.
+local PreviousAimbotDropdownOpen = AimbotDropdownOpen
+local LayoutConnection = task.spawn(function()
     while AimbotPage.Parent do
-        local espOpen = IsEspDropdownOpen()
-        local aimOpen = IsAimbotDropdownOpen()
-        if espOpen ~= LastEspState or aimOpen ~= LastAimbotState then
-            LastEspState = espOpen
-            LastAimbotState = aimOpen
-            EspDropdownOpen = espOpen
-            AimbotDropdownOpen = aimOpen
-            UpdateAimbotLayout(true)
+        if PreviousAimbotDropdownOpen ~= AimbotDropdownOpen then
+            PreviousAimbotDropdownOpen = AimbotDropdownOpen
+            UpdateAimbotLayout()
         end
-        task.wait(0.03)
+        task.wait()
     end
 end)
 
-UpdateAimbotLayout(false)
+UpdateAimbotLayout()
 
 --//==================================================
 --// EXISTING PLAYERS
